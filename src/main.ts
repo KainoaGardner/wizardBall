@@ -8,7 +8,9 @@ import type { PlayerConstruct } from './player.ts';
 
 import type { Input } from './input.ts';
 
-import { planckWorld, STEP, PIXELS_PER_UNIT } from './physics.ts'
+import { planckWorld, STEP, PIXELS_PER_UNIT } from './physics.ts';
+
+import { Network } from "./server/network.ts";
 
 (async () => {
   const app = new Application();
@@ -37,6 +39,32 @@ import { planckWorld, STEP, PIXELS_PER_UNIT } from './physics.ts'
   bg.height = GAME_HEIGHT;
   worldCon.addChildAt(bg, 0);
 
+  const localInput: Input = {
+     up: false,
+     down: false,
+     left: false,
+     right: false,
+  };
+
+  const remoteInput: Input = {
+     up: false,
+     down: false,
+     left: false,
+     right: false,
+  };
+
+  const network = new Network("ws://localhost:3000", "room1");
+  network.onConnect = () => {
+    console.log("Connected to peer!");
+  }
+
+  network.onInput = (input: Input) => {
+    remoteInput.up = input.up;
+    remoteInput.down = input.down;
+    remoteInput.left = input.left;
+    remoteInput.right = input.right;
+  }
+
   const p1Con: PlayerConstruct = {
     x: -GAME_WIDTH / 3,
     y: 0,
@@ -55,60 +83,40 @@ import { planckWorld, STEP, PIXELS_PER_UNIT } from './physics.ts'
     color: 0xe74c3c,
   }
 
-  const p1 = new Player(p1Con, app);
-  worldCon.addChild(p1.getContainer());
+  const localPlayer = new Player(p1Con, app);
+  worldCon.addChild(localPlayer.getContainer());
 
-  const p2 = new Player(p2Con, app);
-  worldCon.addChild(p2.getContainer());
-
-  const input1: Input = {
-     up: false,
-     down: false,
-     left: false,
-     right: false,
-  };
-
-  const input2: Input = {
-     up: false,
-     down: false,
-     left: false,
-     right: false,
-  };
+  const remotePlayer = new Player(p2Con, app);
+  worldCon.addChild(remotePlayer.getContainer());
 
   // basic keyboard input
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'w') input1.up = true;
-    if (e.key === 's') input1.down = true;
-    if (e.key === 'a') input1.left = true;
-    if (e.key === 'd') input1.right = true;
-
-    if (e.key === 'ArrowUp') input2.up = true;
-    if (e.key === 'ArrowDown') input2.down = true;
-    if (e.key === 'ArrowLeft') input2.left = true;
-    if (e.key === 'ArrowRight') input2.right = true;
-
+    if (e.key === 'w') localInput.up = true;
+    if (e.key === 's') localInput.down = true;
+    if (e.key === 'a') localInput.left = true;
+    if (e.key === 'd') localInput.right = true;
   });
 
   window.addEventListener('keyup', (e) => {
-    if (e.key === 'w') input1.up = false;
-    if (e.key === 's') input1.down = false;
-    if (e.key === 'a') input1.left = false;
-    if (e.key === 'd') input1.right = false;
-
-    if (e.key === 'ArrowUp') input2.up = false;
-    if (e.key === 'ArrowDown') input2.down = false;
-    if (e.key === 'ArrowLeft') input2.left = false;
-    if (e.key === 'ArrowRight') input2.right = false;
+    if (e.key === 'w') localInput.up = false;
+    if (e.key === 's') localInput.down = false;
+    if (e.key === 'a') localInput.left = false;
+    if (e.key === 'd') localInput.right = false;
   });
 
+
+  setInterval(() => {
+    network.sendInput(localInput);
+  }, 50);
+
   app.ticker.add((time) => {
+    localPlayer.updateInput(localInput, time.deltaTime);
+    remotePlayer.updateInput(remoteInput, time.deltaTime);
+
     planckWorld.step(STEP);
 
-    p1.updateInput(input1 ,time.deltaTime);
-    p1.updateRender(PIXELS_PER_UNIT);
-
-    p2.updateInput(input2 ,time.deltaTime);
-    p2.updateRender(PIXELS_PER_UNIT);
+    localPlayer.updateRender(PIXELS_PER_UNIT);
+    remotePlayer.updateRender(PIXELS_PER_UNIT);
   });
 })();
 
