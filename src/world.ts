@@ -1,7 +1,5 @@
-const GAME_WIDTH = 1920;
-const GAME_HEIGHT = 1080;
-
 import { Container } from 'pixi.js';
+import { GAME_WIDTH, GAME_HEIGHT } from './global.ts';
 
 export function resizeWorld(world: Container) {
   const scale = Math.min(
@@ -15,5 +13,7 @@ export function resizeWorld(world: Container) {
     window.innerHeight / 2
   )
 }
+
+
 
 export { GAME_WIDTH, GAME_HEIGHT }

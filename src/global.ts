@@ -1,0 +1,6 @@
+const GAME_WIDTH = 1920;
+const GAME_HEIGHT = 1080;
+const STEP = 1 / 60;
+const PIXELS_PER_UNIT = 100;
+
+export { GAME_WIDTH, GAME_HEIGHT, STEP, PIXELS_PER_UNIT }

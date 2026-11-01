@@ -3,6 +3,7 @@ import type { Input } from './input.ts';
 import planck from 'planck';
 import { createPlayerBody } from './physics.ts'
 import { createCircleTexture } from './texture.ts';
+import { GAME_WIDTH, GAME_HEIGHT, PIXELS_PER_UNIT } from './global.ts';
 
 interface PlayerConstruct {
     x: number,
@@ -67,11 +68,11 @@ export class Player {
     this.body.applyForceToCenter(dir, true);
   }
 
-  public updateRender(pixelScale: number) {
+  public updateRender() {
     const pos = this.body.getPosition();
 
-    this.container.x = pos.x * pixelScale;
-    this.container.y = pos.y * pixelScale;
+    this.container.x = pos.x * PIXELS_PER_UNIT;
+    this.container.y = pos.y * PIXELS_PER_UNIT;
   }
 
 }

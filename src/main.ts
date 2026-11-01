@@ -1,14 +1,15 @@
 import "./style.css";
 
 import { Application, Assets, Container, Sprite, Texture } from 'pixi.js';
-import { resizeWorld, GAME_WIDTH, GAME_HEIGHT } from './world.ts';
+import { resizeWorld } from './world.ts';
+import { GAME_WIDTH, GAME_HEIGHT, STEP, PIXELS_PER_UNIT } from './global.ts';
 
 import { Player } from './player.ts';
 import type { PlayerConstruct } from './player.ts';
 
 import type { Input } from './input.ts';
 
-import { planckWorld, STEP, PIXELS_PER_UNIT } from './physics.ts';
+import { createWallBody, planckWorld,  } from './physics.ts';
 
 import { Network } from "./server/network.ts";
 
@@ -38,6 +39,14 @@ import { Network } from "./server/network.ts";
   bg.width = GAME_WIDTH;
   bg.height = GAME_HEIGHT;
   worldCon.addChildAt(bg, 0);
+
+  const wallThickness = 2 / PIXELS_PER_UNIT; 
+  createWallBody((-GAME_WIDTH / 2) / PIXELS_PER_UNIT, 0, wallThickness, GAME_HEIGHT / PIXELS_PER_UNIT)
+  createWallBody((GAME_WIDTH / 2) / PIXELS_PER_UNIT, 0, wallThickness, GAME_HEIGHT / PIXELS_PER_UNIT)
+  createWallBody(0, 0, wallThickness, GAME_HEIGHT / PIXELS_PER_UNIT)
+  createWallBody(0, (-GAME_HEIGHT / 2) / PIXELS_PER_UNIT, GAME_WIDTH / PIXELS_PER_UNIT, wallThickness)
+  createWallBody(0, (GAME_HEIGHT / 2) / PIXELS_PER_UNIT, GAME_WIDTH / PIXELS_PER_UNIT, wallThickness)
+
 
   const localInput: Input = {
      up: false,
@@ -115,8 +124,8 @@ import { Network } from "./server/network.ts";
 
     planckWorld.step(STEP);
 
-    localPlayer.updateRender(PIXELS_PER_UNIT);
-    remotePlayer.updateRender(PIXELS_PER_UNIT);
+    localPlayer.updateRender();
+    remotePlayer.updateRender();
   });
 })();
 
