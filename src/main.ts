@@ -43,7 +43,7 @@ import { Network } from "./server/network.ts";
   const wallThickness = 2 / PIXELS_PER_UNIT; 
   createWallBody((-GAME_WIDTH / 2) / PIXELS_PER_UNIT, 0, wallThickness, GAME_HEIGHT / PIXELS_PER_UNIT)
   createWallBody((GAME_WIDTH / 2) / PIXELS_PER_UNIT, 0, wallThickness, GAME_HEIGHT / PIXELS_PER_UNIT)
-  createWallBody(0, 0, wallThickness, GAME_HEIGHT / PIXELS_PER_UNIT)
+  createWallBody(0, 0, wallThickness, GAME_HEIGHT / PIXELS_PER_UNIT, true)
   createWallBody(0, (-GAME_HEIGHT / 2) / PIXELS_PER_UNIT, GAME_WIDTH / PIXELS_PER_UNIT, wallThickness)
   createWallBody(0, (GAME_HEIGHT / 2) / PIXELS_PER_UNIT, GAME_WIDTH / PIXELS_PER_UNIT, wallThickness)
 
