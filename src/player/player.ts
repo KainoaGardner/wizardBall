@@ -1,14 +1,15 @@
 import planck from 'planck';
 import { Application, Container, Sprite, Texture } from 'pixi.js';
 
-import { Physics } from './physics.ts';
-import { Ball, BALL_STATE, BALL_THROW_SPEED } from './ball.ts';
+import { Physics } from '../utils/physics.ts';
+import { Ball, BALL_STATE, BALL_THROW_SPEED } from '../balls/ball.ts';
 
-import { Input } from './input.ts';
-import type { InputKeys, InputMouse } from './input.ts';
+import type { InputKeys, InputMouse } from '../input/input.ts';
 
-import { createCircleTexture } from './texture.ts';
-import { PIXELS_PER_UNIT, TEAM_SIDE } from './global.ts';
+import { createCircleTexture } from '../utils/texture.ts';
+import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
+
+const DEFAULT_HEALTH = 100;
 
 interface PlayerConstruct {
   x: number,
@@ -31,7 +32,7 @@ export class Player {
   private speed: number;
 
   private health: number;
-  private sheild: number;
+  private sheild: number = 0;
 
   private airResist: number;
   private holding: Ball | null = null;
@@ -166,4 +167,5 @@ export class Player {
 
 }
 
+export { DEFAULT_HEALTH }
 export type { PlayerConstruct }

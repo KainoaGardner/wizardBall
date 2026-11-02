@@ -1,10 +1,10 @@
 import planck from 'planck';
 import { Application, Container, Sprite, Texture } from 'pixi.js';
 
-import { Physics } from './physics.ts';
+import { Physics } from '../utils/physics.ts';
 
-import { createCircleTexture } from './texture.ts';
-import { PIXELS_PER_UNIT, TEAM_SIDE } from './global.ts';
+import { createCircleTexture } from '../utils/texture.ts';
+import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
 
 const BALL_RESET_SPEED = 0.3; 
 const BALL_THROW_SPEED = 100.0;

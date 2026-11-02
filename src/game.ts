@@ -2,19 +2,18 @@ import { Application, Container, Ticker, Sprite, Texture } from 'pixi.js';
 import planck from 'planck';
 
 import { Network } from "./server/network.ts";
-import { Physics } from './physics.ts';
+import { Physics } from './utils/physics.ts';
 
-import { resizeWorld } from './world.ts';
-import { Input } from './input.ts';
-import type { InputKeys } from './input.ts';
+import { resizeWorld } from './utils/world.ts';
+import { Input } from './input/input.ts';
 
-import { Player } from './player.ts';
-import type { PlayerConstruct } from './player.ts';
+import { Player, DEFAULT_HEALTH } from './player/player.ts';
+import type { PlayerConstruct } from './player/player.ts';
 
-import { Ball, BALL_STATE } from './ball.ts';
-import type { BallConstruct } from './ball.ts';
+import { Ball, BALL_STATE } from './balls/ball.ts';
+import type { BallConstruct } from './balls/ball.ts';
 
-import { GAME_WIDTH, GAME_HEIGHT, PIXELS_PER_UNIT, WALL_THICKNESS, TEAM_SIDE } from './global.ts';
+import { GAME_WIDTH, GAME_HEIGHT, PIXELS_PER_UNIT, WALL_THICKNESS, TEAM_SIDE } from './utils/global.ts';
 
 export class Game {
   private app: Application
@@ -116,6 +115,7 @@ export class Game {
       airResist: 10,
       color: 0x3498db,
       side: TEAM_SIDE.Left,
+      health: DEFAULT_HEALTH,
     }
   
     const p2Con: PlayerConstruct = {
@@ -126,6 +126,7 @@ export class Game {
       airResist: 10,
       color: 0xe74c3c,
       side: TEAM_SIDE.Right,
+      health: DEFAULT_HEALTH,
     }
   
     this.localPlayer = new Player(p1Con, this.physics, this.app);
