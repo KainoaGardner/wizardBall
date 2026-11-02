@@ -9,9 +9,25 @@ import type { InputKeys, InputMouse } from '../input/input.ts';
 import { createCircleTexture } from '../utils/texture.ts';
 import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
 
+
 const DEFAULT_HEALTH = 100;
 
+export interface PlayerState {
+  id: number;
+  x: number;
+  y: number;
+  angle: number;
+  vx: number;
+  vy: number;
+}
+
+export enum PLAYER_ID {
+  P1,
+  P2,
+}
+
 interface PlayerConstruct {
+  id: PLAYER_ID,
   x: number,
   y: number,
   size: number,
@@ -23,6 +39,7 @@ interface PlayerConstruct {
 }
 
 export class Player {
+  private id: PLAYER_ID;
   private container: Container;
   private sprite: Sprite;
   private body: planck.Body;
@@ -45,6 +62,7 @@ export class Player {
     app: Application,
   ) {
 
+    this.id = p.id;
     this.size = p.size;
     this.color = p.color;
     this.speed = p.speed;
@@ -68,6 +86,10 @@ export class Player {
     this.body.setLinearDamping(p.airResist);
   }
 
+  public getId(){
+    return this.id;
+  }
+
   public getContainer(){
     return this.container;
   }
@@ -75,6 +97,39 @@ export class Player {
   public getBody(){
     return this.body; 
   }
+
+  public getPlayerState(): PlayerState {
+    const pos = this.body.getPosition();
+    const vel = this.body.getLinearVelocity();
+
+    return {
+      id: this.id,
+      x: pos.x,
+      y: pos.y,
+      angle: this.body.getAngle(),
+      vx: vel.x,
+      vy: vel.y,
+    };
+  }
+
+  public setPlayerState(playerState: PlayerState){
+    this.setPosition(playerState.x, playerState.y);
+    this.setAngle(playerState.angle);
+    this.setVelocity(playerState.vx, playerState.vy);
+  }
+
+  public setPosition(x: number, y: number){
+    this.body.setPosition(new planck.Vec2(x, y));
+  }
+
+  public setAngle(angle: number){
+    this.body.setAngle(angle);
+  }
+
+  public setVelocity(vx: number, vy: number){
+    this.body.setLinearVelocity(new planck.Vec2(vx, vy));
+  }
+
 
   private pickupBall(ball: Ball){
     if (this.holding !== null) return;

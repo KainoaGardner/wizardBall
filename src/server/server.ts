@@ -18,12 +18,24 @@ wss.on("connection", (ws: WebSocket) => {
       }
   
       const room = rooms.get(roomId)!;
+
+      if (room.length >= 2){
+        ws.send(JSON.stringify({ type: "error", message: "Room full"}))
+      }
+
       room.push(ws);
 
-      ws.send(JSON.stringify({
-        type: 'role',
-        initiator: room.length === 1
-      }));
+      if (room.length === 2){
+        room[0].send(JSON.stringify({
+          type: "role",
+          initiator: true
+        }));
+
+        room[1].send(JSON.stringify({
+          type: "role",
+          initiator: false
+        }));   
+      }
     };
 
     if (data.type === "signal") {

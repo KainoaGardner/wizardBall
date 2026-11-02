@@ -6,10 +6,20 @@ import { Physics } from '../utils/physics.ts';
 import { createCircleTexture } from '../utils/texture.ts';
 import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
 
-const BALL_RESET_SPEED = 0.3; 
+const BALL_RESET_SPEED = 5; 
 const BALL_THROW_SPEED = 100.0;
 
+export interface BallState {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: number;
+}
+
 interface BallConstruct {
+  id: number,
   x: number,
   y: number,
   size: number,
@@ -27,6 +37,7 @@ export enum BALL_STATE {
 }
 
 export class Ball {
+  private id: number;
   private container: Container;
   private sprite: Sprite;
   private body: planck.Body;
@@ -47,6 +58,7 @@ export class Ball {
     app: Application,
   ) {
 
+    this.id = ball.id;
     this.size = ball.size;
     this.color = ball.color;
     this.defaultColor = ball.color;
@@ -67,6 +79,10 @@ export class Ball {
     this.airResist = ball.airResist;
 
     this.body.setLinearDamping(ball.airResist);
+  }
+
+  public getId(){
+    return this.id;
   }
 
   public getContainer(): Container {
@@ -97,8 +113,32 @@ export class Ball {
     this.state = state;
   }
 
+  public getBallState(): BallState {
+    const pos = this.body.getPosition();
+    const vel = this.body.getLinearVelocity();
+
+    return {
+      id: this.id,
+      x: pos.x,
+      y: pos.y,
+      vx: vel.x,
+      vy: vel.y,
+      color: this.color,
+    };
+  }
+
+  public setBallState(ballState: BallState){
+    this.setPosition(ballState.x, ballState.y);
+    this.setVelocity(ballState.vx, ballState.vy);
+    this.setColor(ballState.color);
+  }
+
   public setPosition(x: number, y: number){
     this.body.setPosition(new planck.Vec2(x, y));
+  }
+
+  public setVelocity(vx: number, vy: number){
+    this.body.setLinearVelocity(new planck.Vec2(vx, vy));
   }
 
   private setColor(color: number){

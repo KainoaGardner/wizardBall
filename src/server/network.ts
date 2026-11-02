@@ -1,35 +1,18 @@
 import Peer from 'simple-peer';
 
-type InputState = {
-  up: boolean;
-  down: boolean;
-  left: boolean;
-  right: boolean;
-}
+import type { InputPacket, ServerMessage, PeerMessage } from "./packets.ts"
+import type { GameStatePacket } from "../game.ts"
 
-type RoleMessage = { 
-  type: "role",
-  initiator: boolean 
-}
-
-type SignalMessage = {
-  type: "signal",
-  data: any 
-}
-
-type ServerMessage = RoleMessage | SignalMessage;
-
-type PeerMessage = { 
-  type: "input",
-  input: InputState
-};
 
 export class Network {
   private socket: WebSocket;
   private peer?: InstanceType<typeof Peer>;
+  private isHost: boolean = false;
 
-  public onInput?: (input: InputState) => void;
+  public onInput?: (packet: InputPacket) => void;
+  public onGameState?: (packet: GameStatePacket) => void;
   public onConnect?: () => void;
+
 
   constructor(serverUrl: string, room: string){
     this.socket = new WebSocket(serverUrl);
@@ -45,6 +28,7 @@ export class Network {
       const data = JSON.parse(event.data) as ServerMessage;
 
       if (data.type === "role"){
+        this.isHost = data.initiator;
         this.createPeer(data.initiator);
       }
 
@@ -55,6 +39,10 @@ export class Network {
     };
   }
 
+  public getIsHost(){
+    return this.isHost;
+  }
+  
   private createPeer(initiator: boolean){
     this.peer = new Peer({
       initiator,
@@ -77,7 +65,11 @@ export class Network {
       const msg = JSON.parse(data.toString()) as PeerMessage;
 
       if (msg.type === "input"){
-        this.onInput?.(msg.input);
+        this.onInput?.(msg);
+      }
+
+      if (msg.type === "gameState"){
+        this.onGameState?.(msg);
       }
     });
 
@@ -90,12 +82,17 @@ export class Network {
     })
   }
 
-  public sendInput(input: InputState) {
+  public sendInput(packet: InputPacket) {
     if (!this.peer || !this.peer.connected) return;
 
-    this.peer.send(JSON.stringify({
-      type: "input",
-      input: input
-    }));
+    this.peer.send(JSON.stringify(packet));
   }
+
+  public sendGameState(packet: GameStatePacket) {
+    if (!this.peer || !this.peer.connected) return;
+
+    this.peer.send(JSON.stringify(packet));
+  }
+
+
 }
