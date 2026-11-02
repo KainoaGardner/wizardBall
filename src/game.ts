@@ -25,7 +25,7 @@ export class Game {
   private worldContainer!: Container
 
   private physics: Physics = new Physics();
-  private input: Input = new Input(); 
+  private input!: Input; 
   private network!: Network;
 
   constructor(app: Application) {
@@ -36,10 +36,22 @@ export class Game {
   private setup(){
     this.createNetwork();
     this.createWorld();
+    this.setupInput();
     this.createWalls();
     this.createPlayers();
     this.createBalls();
     this.handleCollision();
+  }
+
+  private setupInput(){
+    this.input = new Input(this.app, this.worldContainer);
+    window.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+    });
+
+    this.app.canvas.addEventListener("dragstart", (event) => {
+        event.preventDefault();
+    });
   }
 
   private createWorld(){
@@ -69,13 +81,17 @@ export class Game {
       console.log("Connected to peer!");
     }
 
-    const remoteInput = this.input.getRemoteInput();
-    this.network.onInput = (input: InputKeys) => {
-      remoteInput.up = input.up;
-      remoteInput.down = input.down;
-      remoteInput.left = input.left;
-      remoteInput.right = input.right;
-    }
+    // const remoteInput = this.input.getRemoteInput();
+    // this.network.onInput = (input: InputKeys) => {
+    //   remoteInput.up = input.up;
+    //   remoteInput.down = input.down;
+    //   remoteInput.left = input.left;
+    //   remoteInput.right = input.right;
+    //   remoteInput.throw = input.throw;
+    //   remoteInput.drop = input.drop;
+    //   remoteInput.ability1 = input.ability1;
+    //   remoteInput.ability2 = input.ability2;
+    // }
 
     setInterval(() => {
       this.network.sendInput(this.input.getLocalInput());
@@ -122,10 +138,32 @@ export class Game {
   private createBalls(){
     const ball1Con: BallConstruct = {
       x: 0,
+      y: GAME_HEIGHT / 3,
+      size: 100,
+      speed: 2000,
+      airResist: 1.0,
+      color: 0xFFFFFF,
+      state: BALL_STATE.Neutral,
+      side: TEAM_SIDE.Neither,
+    }
+
+    const ball2Con: BallConstruct = {
+      x: 0,
       y: 0,
-      size: 30,
-      speed: 50,
-      airResist: 3,
+      size: 40,
+      speed: 500,
+      airResist: 1.5,
+      color: 0xFFFFFF,
+      state: BALL_STATE.Neutral,
+      side: TEAM_SIDE.Neither,
+    }
+
+    const ball3Con: BallConstruct = {
+      x: 0,
+      y: -GAME_HEIGHT / 3,
+      size: 25,
+      speed: 250,
+      airResist: 1.0,
       color: 0xFFFFFF,
       state: BALL_STATE.Neutral,
       side: TEAM_SIDE.Neither,
@@ -133,7 +171,15 @@ export class Game {
 
     const ball1 = new Ball(ball1Con, this.physics, this.app);
     this.worldContainer.addChild(ball1.getContainer());
+    const ball2 = new Ball(ball2Con, this.physics, this.app);
+    this.worldContainer.addChild(ball2.getContainer());
+    const ball3 = new Ball(ball3Con, this.physics, this.app);
+    this.worldContainer.addChild(ball3.getContainer());
+
+
     this.balls.push(ball1)
+    this.balls.push(ball2)
+    this.balls.push(ball3)
   }
 
   private handleCollision(){
@@ -162,8 +208,13 @@ export class Game {
   }
 
   public update(time: Ticker){
-    this.localPlayer.updateInput(this.input.getLocalInput(), time.deltaTime);
-    this.remotePlayer.updateInput(this.input.getRemoteInput(), time.deltaTime);
+    for (const ball of this.balls){
+        ball.updateInput(time.deltaTime);
+    }
+
+    this.localPlayer.updateInput(this.input.getLocalInput(), this.input.getMouseInput(), time.deltaTime);
+    this.remotePlayer.updateInput(this.input.getRemoteInput(), this.input.getMouseInput(), time.deltaTime);
+
 
 
     this.physics.update();
@@ -172,6 +223,7 @@ export class Game {
   public render(){
     this.localPlayer.updateRender();
     this.remotePlayer.updateRender();
+
 
     for (const ball of this.balls){
         ball.updateRender();

@@ -6,6 +6,9 @@ import { Physics } from './physics.ts';
 import { createCircleTexture } from './texture.ts';
 import { PIXELS_PER_UNIT, TEAM_SIDE } from './global.ts';
 
+const BALL_RESET_SPEED = 0.3; 
+const BALL_THROW_SPEED = 100.0;
+
 interface BallConstruct {
   x: number,
   y: number,
@@ -29,6 +32,7 @@ export class Ball {
   private body: planck.Body;
 
   private size: number;
+  private defaultColor: number;
   private color: number;
   private speed: number;
 
@@ -45,6 +49,7 @@ export class Ball {
 
     this.size = ball.size;
     this.color = ball.color;
+    this.defaultColor = ball.color;
     this.speed = ball.speed;
     this.state = ball.state;
     this.side = ball.side;
@@ -72,22 +77,55 @@ export class Ball {
     return this.state;
   }
 
+  public getSide(){
+    return this.side;
+  }
+
+  public getSpeed(){
+    return this.speed;
+  }
+
   public getBody(){
     return this.body; 
+  }
+
+  public getSize(){
+    return this.size; 
+  }
+
+  public setState(state: BALL_STATE){
+    this.state = state;
   }
 
   public setPosition(x: number, y: number){
     this.body.setPosition(new planck.Vec2(x, y));
   }
 
-  public pickup(side: TEAM_SIDE){
+  private setColor(color: number){
+    this.color = color;
+    this.sprite.tint = this.color;
+  }
+
+  public pickup(side: TEAM_SIDE, color: number){
     this.side = side;
     this.state = BALL_STATE.Held;
+    this.setColor(color);
   }
+
 
   public updateInput(dt: number){
     const speedDt = this.speed * dt;
     
+    const speed = this.body.getLinearVelocity().length();
+    if (this.state === BALL_STATE.Thrown && speed < BALL_RESET_SPEED){
+      this.resetBall();
+    }
+  }
+
+  private resetBall(){
+    this.side = TEAM_SIDE.Neither;
+    this.state = BALL_STATE.Neutral;
+    this.setColor(this.defaultColor);
   }
 
   public updateRender() {
@@ -101,3 +139,4 @@ export class Ball {
 }
 
 export type { BallConstruct }
+export { BALL_THROW_SPEED, BALL_RESET_SPEED }
