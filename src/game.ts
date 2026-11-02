@@ -1,6 +1,8 @@
 import { Application, Container, Ticker, Sprite, Texture } from 'pixi.js';
 import planck from 'planck';
 
+import { UI } from './ui/ui.ts';
+
 import { Network } from "./server/network.ts";
 import { Physics } from './utils/physics.ts';
 
@@ -14,7 +16,10 @@ import type { PlayerConstruct, PlayerState } from './player/player.ts';
 import { Ball, BALL_STATE } from './balls/ball.ts';
 import type { BallConstruct, BallState } from './balls/ball.ts';
 
-import { GAME_WIDTH, GAME_HEIGHT, PIXELS_PER_UNIT, WALL_THICKNESS, TEAM_SIDE, STEP } from './utils/global.ts';
+import { HealthBar, HEALTH_BAR_PADDING } from './ui/healthbar.ts';
+import type { HealthBarConstruct } from './ui/healthbar.ts';
+
+import { GAME_WIDTH, GAME_HEIGHT, PLAY_WIDTH, PLAY_HEIGHT, PIXELS_PER_UNIT, WALL_THICKNESS, TEAM_SIDE, STEP } from './utils/global.ts';
 
 export interface GameStatePacket {
   type: "gameState"
@@ -43,6 +48,8 @@ export class Game {
 
   private network!: Network;
 
+  private UI!: UI;
+
   private accumulator = 0;
 
   constructor(app: Application) {
@@ -57,7 +64,34 @@ export class Game {
     this.createWalls();
     this.createPlayers();
     this.createBalls();
+    this.createUI();
     this.handleCollision();
+  }
+
+  private createUI(){
+    const p1 = this.players.find(p => p.getId() === PLAYER_ID.P1)!;
+    const p2 = this.players.find(p => p.getId() === PLAYER_ID.P2)!;
+
+    const hb1Con: HealthBarConstruct = {
+      x: -GAME_WIDTH / 2,
+      y: -GAME_HEIGHT / 2,
+      width: GAME_WIDTH / 2,
+      height: (GAME_HEIGHT - PLAY_HEIGHT) / 2,
+      color: p1.getColor(),
+      padding: HEALTH_BAR_PADDING,
+    }
+
+    const hb2Con: HealthBarConstruct = {
+      x: 0,
+      y: -GAME_HEIGHT / 2,
+      width: GAME_WIDTH / 2,
+      height: (GAME_HEIGHT - PLAY_HEIGHT) / 2,
+      color: p2.getColor(),
+      padding: HEALTH_BAR_PADDING,
+    }
+  
+    this.UI = new UI(hb1Con, hb2Con);
+    this.worldContainer.addChild(this.UI.getContainer())
   }
 
   private setupInput(){
@@ -117,11 +151,11 @@ export class Game {
   }
 
   private createWalls(){
-    this.physics.createWallBody((-GAME_WIDTH / 2) / PIXELS_PER_UNIT, 0, WALL_THICKNESS, GAME_HEIGHT / PIXELS_PER_UNIT)
-    this.physics.createWallBody((GAME_WIDTH / 2) / PIXELS_PER_UNIT, 0, WALL_THICKNESS, GAME_HEIGHT / PIXELS_PER_UNIT)
-    this.physics.createWallBody(0, 0, WALL_THICKNESS, GAME_HEIGHT / PIXELS_PER_UNIT, true)
-    this.physics.createWallBody(0, (-GAME_HEIGHT / 2) / PIXELS_PER_UNIT, GAME_WIDTH / PIXELS_PER_UNIT, WALL_THICKNESS)
-    this.physics.createWallBody(0, (GAME_HEIGHT / 2) / PIXELS_PER_UNIT, GAME_WIDTH / PIXELS_PER_UNIT, WALL_THICKNESS)
+    this.physics.createWallBody((-PLAY_WIDTH / 2) / PIXELS_PER_UNIT, 0, WALL_THICKNESS, PLAY_HEIGHT / PIXELS_PER_UNIT)
+    this.physics.createWallBody((GAME_WIDTH / 2) / PIXELS_PER_UNIT, 0, WALL_THICKNESS, PLAY_HEIGHT / PIXELS_PER_UNIT)
+    this.physics.createWallBody(0, 0, WALL_THICKNESS, PLAY_HEIGHT / PIXELS_PER_UNIT, true)
+    this.physics.createWallBody(0, (-PLAY_HEIGHT / 2) / PIXELS_PER_UNIT, PLAY_WIDTH / PIXELS_PER_UNIT, WALL_THICKNESS)
+    this.physics.createWallBody(0, (PLAY_HEIGHT / 2) / PIXELS_PER_UNIT, PLAY_WIDTH / PIXELS_PER_UNIT, WALL_THICKNESS)
   }
 
   private createPlayers(){
@@ -188,7 +222,7 @@ export class Game {
       x: 0,
       y: -GAME_HEIGHT / 3,
       size: 25,
-      speed: 250,
+      speed: 350,
       airResist: 1.0,
       color: 0xFFFFFF,
       state: BALL_STATE.Neutral,
@@ -314,6 +348,8 @@ export class Game {
     for (const ball of this.balls){
         ball.updateRender();
     }
+
+    this.UI.render();
 
   }
 }

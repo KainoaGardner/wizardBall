@@ -98,6 +98,10 @@ export class Player {
     return this.body; 
   }
 
+  public getColor(){
+    return this.color; 
+  }
+
   public getPlayerState(): PlayerState {
     const pos = this.body.getPosition();
     const vel = this.body.getLinearVelocity();
