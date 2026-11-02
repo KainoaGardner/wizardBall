@@ -1,17 +1,22 @@
-import { Application, Container, Sprite, Texture } from 'pixi.js';
-import type { Input } from './input.ts';
 import planck from 'planck';
-import { createPlayerBody } from './physics.ts'
+import { Application, Container, Sprite, Texture } from 'pixi.js';
+
+import { Physics } from './physics.ts';
+import { Ball, BALL_STATE } from './ball.ts';
+
+import type { InputKeys } from './input.ts';
+
 import { createCircleTexture } from './texture.ts';
-import { GAME_WIDTH, GAME_HEIGHT, PIXELS_PER_UNIT } from './global.ts';
+import { PIXELS_PER_UNIT, TEAM_SIDE } from './global.ts';
 
 interface PlayerConstruct {
-    x: number,
-    y: number,
-    size: number,
-    speed: number,
-    airResist: number,
-    color: number,
+  x: number,
+  y: number,
+  size: number,
+  speed: number,
+  airResist: number,
+  color: number,
+  side: TEAM_SIDE,
 }
 
 export class Player {
@@ -24,15 +29,21 @@ export class Player {
   private speed: number;
 
   private airResist: number;
+  private holding: Ball | null = null;
+
+  private side: TEAM_SIDE;
 
   constructor(
     p: PlayerConstruct,
+    physics: Physics, 
     app: Application,
   ) {
 
     this.size = p.size;
     this.color = p.color;
     this.speed = p.speed;
+
+    this.side = p.side;
 
     this.container = new Container();
     this.container.x = p.x;
@@ -43,17 +54,53 @@ export class Player {
     this.sprite.anchor.set(0.5);
     this.container.addChild(this.sprite);
 
-    this.body = createPlayerBody(p.x, p.y, p.size);
+    this.body = physics.createPlayerBody(p.x, p.y, p.size);
     this.airResist = p.airResist;
 
     this.body.setLinearDamping(p.airResist);
   }
 
-  public getContainer(): Container{
+  public getContainer(){
     return this.container;
   }
 
-  public updateInput(input: Input, dt: number){
+  public getBody(){
+    return this.body; 
+  }
+
+  private pickupBall(ball: Ball){
+    console.log("pickup ball")
+    if (this.holding !== null) return;
+    if (ball.getState() !== BALL_STATE.Neutral) return;
+
+    ball.pickup(this.side);
+    this.holding = ball;
+  }
+
+  public handleCollision(otherBody: planck.Body, balls: Ball[]){
+    const ball = balls.find(
+      ball => ball.getBody() === otherBody
+    );
+    
+    if (!ball) return;
+
+    switch (ball.getState()){
+      case BALL_STATE.Neutral:
+        this.pickupBall(ball);
+      break;
+      case BALL_STATE.Thrown:
+      break;
+    } 
+  }
+  
+  private updateHeld(){
+    if (!this.holding) return;
+
+    const pos = this.body.getPosition();
+    this.holding.setPosition(pos.x + 1, pos.y);
+  }
+
+  public updateInput(input: InputKeys, dt: number){
     const dir = new planck.Vec2(0, 0);
     const speedDt = this.speed * dt;
 
@@ -66,6 +113,8 @@ export class Player {
     dir.normalize();
     dir.mul(speedDt);
     this.body.applyForceToCenter(dir, true);
+
+    this.updateHeld();
   }
 
   public updateRender() {
