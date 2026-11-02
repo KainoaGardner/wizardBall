@@ -28,6 +28,7 @@ interface BallConstruct {
   color: number,
   state: number,
   side: number,
+  damage: number,
 }
 
 export enum BALL_STATE {
@@ -50,7 +51,13 @@ export class Ball {
   private state: number;
   private side: number;
 
+  private damage: number;
+
   private airResist: number;
+
+  private resetX: number;
+  private resetY: number;
+  private resetSize: number;
 
   constructor(
     ball: BallConstruct,
@@ -66,6 +73,8 @@ export class Ball {
     this.state = ball.state;
     this.side = ball.side;
 
+    this.damage = ball.damage;
+
     this.container = new Container();
     this.container.x = ball.x;
     this.container.y = ball.y;
@@ -79,6 +88,16 @@ export class Ball {
     this.airResist = ball.airResist;
 
     this.body.setLinearDamping(ball.airResist);
+
+    this.resetX = ball.x;
+    this.resetY = ball.y;
+    this.resetSize = ball.size;
+  }
+
+  public reset(){
+    this.setPosition(this.resetX, this.resetY);
+    this.setVelocity(0, 0);
+    this.size = this.resetSize;
   }
 
   public getId(){
@@ -107,6 +126,10 @@ export class Ball {
 
   public getSize(){
     return this.size; 
+  }
+
+  public getDamage(){
+    return this.damage; 
   }
 
   public setState(state: BALL_STATE){
@@ -162,7 +185,7 @@ export class Ball {
     }
   }
 
-  private resetBall(){
+  public resetBall(){
     this.side = TEAM_SIDE.Neither;
     this.state = BALL_STATE.Neutral;
     this.setColor(this.defaultColor);

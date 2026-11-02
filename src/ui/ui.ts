@@ -2,6 +2,10 @@ import { Container, Graphics, Text } from 'pixi.js';
 import { HealthBar } from './healthbar.ts';
 import type { HealthBarConstruct } from './healthbar.ts';
 
+export interface UIState {
+  p1Health: number;
+  p2Health: number;
+}
 
 export class UI {
   private container: Container;
@@ -22,9 +26,22 @@ export class UI {
     return this.container;
   }
 
-  // public getHealthBars(){
-  //   return [this.p1Health, this.p2Health];
-  // }
+  public getUIState(): UIState {
+    return {
+      p1Health: this.p1Health.getHealth(),
+      p2Health: this.p2Health.getHealth()
+    }
+  }
+
+  public setUIState(uiState: UIState){
+    this.p1Health.setHealth(uiState.p1Health);
+    this.p2Health.setHealth(uiState.p2Health);
+  }
+
+  public update(normHealth1: number, normHealth2: number){
+    this.p1Health.setHealth(normHealth1);
+    this.p2Health.setHealth(normHealth2);
+  }
 
   public render(){
     this.p1Health.updateRender();

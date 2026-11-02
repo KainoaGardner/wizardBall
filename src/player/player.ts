@@ -56,6 +56,10 @@ export class Player {
 
   private side: TEAM_SIDE;
 
+  private resetX: number;
+  private resetY: number;
+  private resetHealth: number;
+
   constructor(
     p: PlayerConstruct,
     physics: Physics, 
@@ -68,6 +72,8 @@ export class Player {
     this.speed = p.speed;
 
     this.health = p.health;
+
+    this.resetHealth = p.health;
 
     this.side = p.side;
 
@@ -84,6 +90,16 @@ export class Player {
     this.airResist = p.airResist;
 
     this.body.setLinearDamping(p.airResist);
+
+    this.resetX = p.x;
+    this.resetY = p.y;
+    this.resetHealth = p.health;
+  }
+
+  public reset(){
+    this.setPosition(this.resetX, this.resetY);
+    this.setVelocity(0, 0);
+    this.health = this.resetHealth;
   }
 
   public getId(){
@@ -116,6 +132,10 @@ export class Player {
     };
   }
 
+  public getNormalHealth(){
+    return this.health / this.resetHealth;
+  }
+
   public setPlayerState(playerState: PlayerState){
     this.setPosition(playerState.x, playerState.y);
     this.setAngle(playerState.angle);
@@ -134,9 +154,20 @@ export class Player {
     this.body.setLinearVelocity(new planck.Vec2(vx, vy));
   }
 
+  private takeDamage(damage: number){
+    this.health = Math.max(this.health - damage, 0); 
+  }
+
+  private hit(ball: Ball){
+    if (!(ball.getState() === BALL_STATE.Thrown && ball.getSide() !== this.side)) return;
+    
+    this.takeDamage(ball.getDamage());
+    ball.resetBall();
+  }
 
   private pickupBall(ball: Ball){
     if (this.holding !== null) return;
+    if (ball.getState() === BALL_STATE.Held) return;
     if (ball.getState() === BALL_STATE.Thrown && ball.getSide() !== this.side) return;
 
     ball.pickup(this.side, this.color);
@@ -180,6 +211,7 @@ export class Player {
     if (!ball) return;
 
     this.pickupBall(ball);
+    this.hit(ball);
   }
   
   private updateHeld(mousePos: InputMouse){
@@ -198,7 +230,7 @@ export class Player {
     this.holding.setPosition(ballX, ballY);
   }
 
-  public updateInput(keyInput: InputKeys, mouseInput: InputMouse, dt: number){
+  public update(keyInput: InputKeys, mouseInput: InputMouse, dt: number){
     const dir = new planck.Vec2(0, 0);
     const speedDt = this.speed * dt;
 

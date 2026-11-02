@@ -5,6 +5,11 @@ import { GAME_WIDTH, GAME_HEIGHT, PLAY_HEIGHT, PLAY_WIDTH } from '../utils/globa
 export const HEALTH_BAR_PADDING = 10;
 const HEALTH_BAR_BACKGROUND_COLOR = 0x2d3436;
 
+export enum DIRECTION {
+  Right = 1,
+  Left = -1,
+}
+
 export interface HealthBarConstruct {
   x: number,
   y: number,
@@ -12,6 +17,7 @@ export interface HealthBarConstruct {
   height: number,
   padding: number,
   color: number,
+  dir: DIRECTION,
 }
 
 export class HealthBar {
@@ -21,6 +27,7 @@ export class HealthBar {
   private height: number;
   private padding: number;
   private color!: number;
+  private dir: DIRECTION;
 
   private graphics: Graphics;
 
@@ -35,6 +42,7 @@ export class HealthBar {
     this.health = 1.0;
     this.padding = h.padding;
     this.color = h.color;
+    this.dir = h.dir;
 
     this.updateRender();
   }
@@ -43,9 +51,21 @@ export class HealthBar {
     return this.graphics
   }
 
+  public getHealth(){
+    return this.health;
+  }
+
+  public setHealth(normalizedHealth: number){
+    this.health = normalizedHealth;
+  }
+
   public updateRender(){
     this.graphics.clear();
-    this.graphics.rect(this.x, this.y, this.width * this.health, this.height).fill(HEALTH_BAR_BACKGROUND_COLOR);
-    this.graphics.rect(this.x + this.padding, this.y + this.padding, this.width * this.health - this.padding * 2, this.height - this.padding * 2).fill(this.color);
+    this.graphics.rect(this.x, this.y, this.width, this.height).fill(HEALTH_BAR_BACKGROUND_COLOR);
+    if (this.dir === DIRECTION.Right){
+      this.graphics.rect(this.x + this.padding, this.y + this.padding, this.width * this.health - this.padding * 2, this.height - this.padding * 2).fill(this.color);
+    } else{
+      this.graphics.rect(this.x + this.padding + (1 - this.width) * this.health + this.width, this.y + this.padding, this.width * this.health - this.padding * 2, this.height - this.padding * 2).fill(this.color);
+    }
   }
 }
