@@ -91,15 +91,16 @@ export class Player {
 
     this.body.setLinearDamping(p.airResist);
 
-    this.resetX = p.x;
-    this.resetY = p.y;
+    this.resetX = p.x / PIXELS_PER_UNIT;
+    this.resetY = p.y / PIXELS_PER_UNIT;
     this.resetHealth = p.health;
   }
 
   public reset(){
-    // this.setPosition(this.resetX, this.resetY);
-    // this.setVelocity(0, 0);
-    // this.health = this.resetHealth;
+    this.holding = null;
+    this.setPosition(this.resetX, this.resetY);
+    this.setVelocity(0, 0);
+    this.health = this.resetHealth;
   }
 
   public getId(){

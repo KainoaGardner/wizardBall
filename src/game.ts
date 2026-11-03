@@ -348,6 +348,7 @@ export class Game {
     for (const player of this.players){
       if (player.getNormalHealth() <= 0){
         this.resetGame();
+        break;
       }
     }
 

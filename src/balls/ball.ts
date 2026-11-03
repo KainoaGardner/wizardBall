@@ -89,15 +89,17 @@ export class Ball {
 
     this.body.setLinearDamping(ball.airResist);
 
-    this.resetX = ball.x;
-    this.resetY = ball.y;
+    this.resetX = ball.x / PIXELS_PER_UNIT;
+    this.resetY = ball.y / PIXELS_PER_UNIT;
     this.resetSize = ball.size;
+
   }
 
   public reset(){
-    // this.setPosition(this.resetX, this.resetY);
-    // this.setVelocity(0, 0);
-    // this.size = this.resetSize;
+    this.setPosition(this.resetX, this.resetY);
+    this.setVelocity(0, 0);
+    this.size = this.resetSize;
+    this.resetBall(); 
   }
 
   public getId(){
