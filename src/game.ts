@@ -356,7 +356,7 @@ export class Game {
 
   private updateHost(dt: number){
     for (const ball of this.balls){
-        ball.updateInput(dt);
+        ball.update(dt);
     }
 
     for (const player of this.players){
@@ -368,7 +368,7 @@ export class Game {
       }
     
       if (!input) continue;
-      player.update(input.inputKeys, input.inputMouse, dt)
+      player.update(input.inputKeys, input.inputMouse, this.balls, dt)
     }
 
     this.physics.update();

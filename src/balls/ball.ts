@@ -9,6 +9,8 @@ import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
 const BALL_RESET_SPEED = 5; 
 const BALL_THROW_SPEED = 100.0;
 
+const PICKUP_COOLDOWN = 15;
+
 export interface BallState {
   id: number;
   x: number;
@@ -59,6 +61,8 @@ export class Ball {
   private resetY: number;
   private resetSize: number;
 
+  private pickupCooldown: number = 0;
+
   constructor(
     ball: BallConstruct,
     physics: Physics, 
@@ -92,6 +96,8 @@ export class Ball {
     this.resetX = ball.x / PIXELS_PER_UNIT;
     this.resetY = ball.y / PIXELS_PER_UNIT;
     this.resetSize = ball.size;
+
+    this
 
   }
 
@@ -134,6 +140,10 @@ export class Ball {
     return this.damage; 
   }
 
+  public getPosition(){
+    return this.body.getPosition()
+  }
+
   public setState(state: BALL_STATE){
     this.state = state;
   }
@@ -171,16 +181,28 @@ export class Ball {
     this.sprite.tint = this.color;
   }
 
+  public applyPickupcooldown(){
+    this.pickupCooldown = PICKUP_COOLDOWN;
+  }
+
+  public canPickup(){
+    return this.pickupCooldown <= 0;
+  }
+
   public pickup(side: TEAM_SIDE, color: number){
     this.side = side;
     this.state = BALL_STATE.Held;
     this.setColor(color);
+    this.applyPickupcooldown();
+  }
+  
+  private updatePickup(){
+    if (this.pickupCooldown <= 0) return;
+    this.pickupCooldown = Math.max(this.pickupCooldown - 1, 0);
   }
 
-
-  public updateInput(dt: number){
-    const speedDt = this.speed * dt;
-    
+  public update(dt: number){
+    this.updatePickup();
     const speed = this.body.getLinearVelocity().length();
     if (this.state === BALL_STATE.Thrown && speed < BALL_RESET_SPEED){
       this.resetBall();
@@ -191,6 +213,7 @@ export class Ball {
     this.side = TEAM_SIDE.Neither;
     this.state = BALL_STATE.Neutral;
     this.setColor(this.defaultColor);
+    this.applyPickupcooldown();
   }
 
   public updateRender() {

@@ -1,4 +1,4 @@
-import planck from 'planck';
+import planck, { MouseJoint } from 'planck';
 import { Application, Container, Sprite, Texture } from 'pixi.js';
 
 import { Physics } from '../utils/physics.ts';
@@ -11,6 +11,9 @@ import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
 
 
 const DEFAULT_HEALTH = 100;
+const CATCH_SQUARED_DIST = 3;
+const CATCH_ANGLE_BOUNDS = Math.PI / 8;
+const CATCH_COOLDOWN = 30;
 
 export interface PlayerState {
   id: number;
@@ -59,6 +62,8 @@ export class Player {
   private resetX: number;
   private resetY: number;
   private resetHealth: number;
+
+  private catchCooldown: number = CATCH_COOLDOWN;
 
   constructor(
     p: PlayerConstruct,
@@ -143,6 +148,10 @@ export class Player {
     this.setVelocity(playerState.vx, playerState.vy);
   }
 
+  public getPosition(){
+    return this.body.getPosition();
+  }
+
   public setPosition(x: number, y: number){
     this.body.setPosition(new planck.Vec2(x, y));
   }
@@ -155,6 +164,8 @@ export class Player {
     this.body.setLinearVelocity(new planck.Vec2(vx, vy));
   }
 
+
+
   private takeDamage(damage: number){
     this.health = Math.max(this.health - damage, 0); 
   }
@@ -166,16 +177,75 @@ export class Player {
     ball.resetBall();
   }
 
+  private updateAngle(mousePos: InputMouse){
+    const pos = this.body.getPosition();
+    const scaledMousePos = {x: mousePos.x / PIXELS_PER_UNIT, y: mousePos.y / PIXELS_PER_UNIT};
+    const angle = Math.atan2(scaledMousePos.y - pos.y, scaledMousePos.x - pos.x);
+    this.setAngle(angle);
+  }
+
+  private catchUpdate(){
+    if (this.catchCooldown <= 0) return;
+    this.catchCooldown = Math.max(this.catchCooldown - 1, 0);
+  }
+
+  private catchBall(inputKeys: InputKeys, balls: Ball[]){
+    this.catchUpdate();
+
+    if (this.holding !== null || !inputKeys.catch) return;
+    if (this.catchCooldown > 0) return;
+
+    this.catchCooldown = CATCH_COOLDOWN;
+
+    let caughtBall = null;
+    let minDist = Number.POSITIVE_INFINITY;
+    for (const ball of balls){
+      if (ball.getState() !== BALL_STATE.Thrown || ball.getSide() === this.side) continue;
+      
+      const ballPos = ball.getPosition();
+      const playerPos = this.getPosition();
+
+      let dist = planck.Vec2.distanceSquared(ballPos, playerPos);
+      const scaledBallSize = ball.getSize() / PIXELS_PER_UNIT;
+      const scaledPlayerSize = this.size / PIXELS_PER_UNIT;
+      dist -= scaledBallSize * scaledBallSize;
+      dist -= scaledPlayerSize * scaledPlayerSize;
+      if (dist > CATCH_SQUARED_DIST) continue;
+
+      const dx = ballPos.x - playerPos.x;
+      const dy = ballPos.y - playerPos.y;
+      const angleToBall = Math.atan2(dy, dx);
+      let angleDiff = (angleToBall - this.body.getAngle()) % (Math.PI * 2);
+
+      if (angleDiff > Math.PI / 2) angleDiff -= Math.PI;
+      if (angleDiff < -Math.PI / 2) angleDiff += Math.PI;
+
+      if (!(Math.abs(angleDiff) <= CATCH_ANGLE_BOUNDS)) continue;
+
+      if (dist < minDist){
+        minDist = dist;
+        caughtBall = ball;
+      }
+
+    }
+
+    if (!caughtBall) return;
+
+    this.holding = caughtBall;
+    this.holding.pickup(this.side, this.color);
+  }
+
   private pickupBall(ball: Ball){
     if (this.holding !== null) return;
     if (ball.getState() === BALL_STATE.Held) return;
     if (ball.getState() === BALL_STATE.Thrown && ball.getSide() !== this.side) return;
+    if (!ball.canPickup()) return;
 
     ball.pickup(this.side, this.color);
     this.holding = ball;
   }
 
-  private throwBall(inputKeys: InputKeys, mousePos: InputMouse){
+  private throwBall(inputKeys: InputKeys){
     if (!this.holding || !inputKeys.throw) return;
     
     const ball = this.holding;
@@ -183,12 +253,8 @@ export class Player {
     this.holding = null;
 
     const pos = ball.getBody().getPosition();
-    const scaledMousePos = {x: mousePos.x / PIXELS_PER_UNIT, y: mousePos.y / PIXELS_PER_UNIT};
-    const direction = new planck.Vec2(
-      scaledMousePos.x - pos.x,
-      scaledMousePos.y - pos.y
-    );
-    
+    const angle = this.body.getAngle();    
+    const direction = new planck.Vec2(Math.cos(angle), Math.sin(angle));
     direction.normalize();
 
     ball.getBody().applyForceToCenter(
@@ -200,8 +266,11 @@ export class Player {
     if (!this.holding || !inputKeys.drop) return;
     
     const ball = this.holding;
-    ball.setState(BALL_STATE.Thrown);
+    ball.resetBall();
+    ball.setVelocity(0, 0);
     this.holding = null;
+    // ball.setState(BALL_STATE.Thrown);
+    // ball.applyPickupcooldown();
   }
 
   public handleCollision(otherBody: planck.Body, balls: Ball[]){
@@ -215,7 +284,7 @@ export class Player {
     this.hit(ball);
   }
   
-  private updateHeld(mousePos: InputMouse){
+  private updateHeld(){
     if (!this.holding) return;
 
     const pos = this.body.getPosition();
@@ -224,14 +293,12 @@ export class Player {
     const scaledBallSize = ballSize / PIXELS_PER_UNIT;
     const radius = (scaledPlayerSize + scaledBallSize) * 1.1;
 
-    const scaledMousePos = {x: mousePos.x / PIXELS_PER_UNIT, y: mousePos.y / PIXELS_PER_UNIT};
-    const angle = Math.atan2(scaledMousePos.y - pos.y, scaledMousePos.x - pos.x);
-    const ballX = pos.x + Math.cos(angle) * radius;
-    const ballY = pos.y + Math.sin(angle) * radius;
+    const ballX = pos.x + Math.cos(this.body.getAngle()) * radius;
+    const ballY = pos.y + Math.sin(this.body.getAngle()) * radius;
     this.holding.setPosition(ballX, ballY);
   }
 
-  public update(keyInput: InputKeys, mouseInput: InputMouse, dt: number){
+  public update(keyInput: InputKeys, mouseInput: InputMouse, balls: Ball[], dt: number){
     const dir = new planck.Vec2(0, 0);
     const speedDt = this.speed * dt;
 
@@ -245,9 +312,11 @@ export class Player {
     dir.mul(speedDt);
     this.body.applyForceToCenter(dir, true);
 
-    this.updateHeld(mouseInput);
-    this.throwBall(keyInput, mouseInput);
+    this.updateAngle(mouseInput);
+    this.updateHeld();
+    this.throwBall(keyInput);
     this.dropBall(keyInput);
+    this.catchBall(keyInput, balls);
   }
 
   public updateRender() {

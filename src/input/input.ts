@@ -7,6 +7,7 @@ interface InputKeys {
   right: boolean;
   throw: boolean;
   drop: boolean;
+  catch: boolean;
   ability1: boolean;
   ability2: boolean;
 }
@@ -24,19 +25,9 @@ export class Input {
     right: false,
     throw: false,
     drop: false,
+    catch: false,
     ability1: false,
     ability2: false,
-  };
-
-  private remoteInput: InputKeys = {
-    up: false,
-    down: false,
-    left: false,
-    right: false,
-    throw: false,
-    drop: false,
-    ability1: false,
-    ability2: false,  
   };
 
   private mousePos: InputMouse = {
@@ -59,6 +50,7 @@ export class Input {
       if (e.key === 's') this.localInput.down = true;
       if (e.key === 'a') this.localInput.left = true;
       if (e.key === 'd') this.localInput.right = true;
+      if (e.key === ' ') this.localInput.catch = true;
     });
   
     window.addEventListener('keyup', (e) => {
@@ -66,6 +58,7 @@ export class Input {
       if (e.key === 's') this.localInput.down = false;
       if (e.key === 'a') this.localInput.left = false;
       if (e.key === 'd') this.localInput.right = false;
+      if (e.key === ' ') this.localInput.catch = false;
     });   
   }
 
@@ -113,10 +106,6 @@ export class Input {
 
   public getLocalInput(){
     return this.localInput;
-  }
-
-  public getRemoteInput(){
-    return this.remoteInput;
   }
 
   public getMouseInput(){
