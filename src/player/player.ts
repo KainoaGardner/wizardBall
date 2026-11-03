@@ -97,9 +97,9 @@ export class Player {
   }
 
   public reset(){
-    this.setPosition(this.resetX, this.resetY);
-    this.setVelocity(0, 0);
-    this.health = this.resetHealth;
+    // this.setPosition(this.resetX, this.resetY);
+    // this.setVelocity(0, 0);
+    // this.health = this.resetHealth;
   }
 
   public getId(){

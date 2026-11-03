@@ -79,7 +79,6 @@ export class Game {
     for (const ball of this.balls){
       ball.reset();
     }
-
   }
 
   private createUI(){

@@ -95,9 +95,9 @@ export class Ball {
   }
 
   public reset(){
-    this.setPosition(this.resetX, this.resetY);
-    this.setVelocity(0, 0);
-    this.size = this.resetSize;
+    // this.setPosition(this.resetX, this.resetY);
+    // this.setVelocity(0, 0);
+    // this.size = this.resetSize;
   }
 
   public getId(){
