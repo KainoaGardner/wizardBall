@@ -51,6 +51,8 @@ export class Input {
       if (e.key === 'a') this.localInput.left = true;
       if (e.key === 'd') this.localInput.right = true;
       if (e.key === ' ') this.localInput.catch = true;
+      if (e.key === 'q') this.localInput.ability1 = true;
+      if (e.key === 'e') this.localInput.ability2 = true;
     });
   
     window.addEventListener('keyup', (e) => {
@@ -59,6 +61,8 @@ export class Input {
       if (e.key === 'a') this.localInput.left = false;
       if (e.key === 'd') this.localInput.right = false;
       if (e.key === ' ') this.localInput.catch = false;
+      if (e.key === 'q') this.localInput.ability1 = false;
+      if (e.key === 'e') this.localInput.ability2 = false;
     });   
   }
 

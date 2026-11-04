@@ -14,6 +14,10 @@ export type SpawnFireball = (
   color: number,
 ) => void;
 
+
+export const SPAWN_FIREBALL_ANGLE = Math.PI / 12;
+export const FIREBALL_LIFE_TIME = 60;
+
 export class FireInfusedBall extends Ball {
   spawnFireball: SpawnFireball;
 
@@ -52,6 +56,8 @@ export class FireInfusedBall extends Ball {
 }
 
 export class Fireball extends Ball {
+  private lifeCounter = FIREBALL_LIFE_TIME;
+
   constructor(id: number, ball: BallConstruct, ballTypeConst: BallTypeConstruct, physics: Physics, app: Application){
     super(
       id,
@@ -68,18 +74,12 @@ export class Fireball extends Ball {
       app);
   }
 
-  public override throw(angle: number){
-    this.kill();
-    
-    const pos = this.getPosition();
-    const side = this.getSide();
-    let ballCon: BallConstruct = {
-      x: pos.x * PIXELS_PER_UNIT,
-      y: pos.y * PIXELS_PER_UNIT,
-      state: BALL_STATE.Neutral,
-      side: side,
+  public override update(dt: number){
+    super.update(dt); 
+    this.lifeCounter = Math.max(0, this.lifeCounter - 1);
+    if (this.lifeCounter <= 0){
+      this.kill();
     }
-
-    this.spawnFireball(ballCon, angle, this.getColor());
   }
+
 }

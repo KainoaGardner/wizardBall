@@ -4,7 +4,8 @@ import { BallFactory } from './ballFactory.ts';
 
 import { BALL_TYPE, NORMAL_BALL_TYPE_CONST} from './types.ts';
 
-const SPAWN_FIREBALL_ANGLE = Math.PI / 12;
+import { SPAWN_FIREBALL_ANGLE } from './wizards/fire.ts';
+
 
 export class BallCallbacks {
   private pendingBall: Ball[];

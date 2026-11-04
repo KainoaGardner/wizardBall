@@ -224,7 +224,7 @@ export class Ball {
     
   }
 
-  public onCollision(other: Ball){
+  public handleCollision(otherBody: planck.Body){
 
   }
 

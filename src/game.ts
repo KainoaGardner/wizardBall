@@ -11,7 +11,7 @@ import { Input } from './input/input.ts';
 import type { InputKeys, InputMouse } from './input/input.ts';
 
 import { Player, DEFAULT_HEALTH, PLAYER_ID } from './player/player.ts';
-import type { PlayerConstruct, PlayerState } from './player/player.ts';
+import type { PlayerConstruct, PlayerAbilityConstruct, PlayerState } from './player/player.ts';
 
 import { Ball } from './balls/ball.ts';
 
@@ -25,6 +25,9 @@ import type { HealthBarConstruct } from './ui/healthbar.ts';
 import { GAME_WIDTH, GAME_HEIGHT, PLAY_WIDTH, PLAY_HEIGHT, PIXELS_PER_UNIT, WALL_THICKNESS, MID_WALL_THICKNESS, TEAM_SIDE, STEP } from './utils/global.ts';
 import { BallFactory } from './balls/ballFactory.ts';
 import { BallCallbacks } from './balls/ballCallbacks.ts';
+
+import { firestorm } from './abilities/wizards/fire.ts';
+import { ABILITY_SLOT } from './abilities/abilityManager.ts';
 
 
 export interface GameStatePacket {
@@ -105,6 +108,7 @@ export class Game {
     for (const ball of this.balls){
       ball.reset();
     }
+
   }
 
   private createUI(){
@@ -213,6 +217,20 @@ export class Game {
       side: TEAM_SIDE.Left,
       health: DEFAULT_HEALTH,
     }
+
+    const p1AbilityCon: PlayerAbilityConstruct = {
+      abilites: [firestorm], 
+      slots: new Map([
+        [ABILITY_SLOT.Ability1, firestorm.id],
+      ]),
+    };
+
+    const p2AbilityCon: PlayerAbilityConstruct = {
+      abilites: [firestorm], 
+      slots: new Map([
+        [ABILITY_SLOT.Ability1, firestorm.id],
+      ]),
+    };
   
     const p2Con: PlayerConstruct = {
       id: PLAYER_ID.P2,
@@ -226,38 +244,40 @@ export class Game {
       health: DEFAULT_HEALTH,
     }
   
-    const p1 = new Player(p1Con, this.physics, this.app);
+    const p1 = new Player(p1Con, p1AbilityCon, this.physics, this.app);
     this.worldContainer.addChild(p1.getContainer());
     this.players.push(p1);
   
-    const p2 = new Player(p2Con, this.physics, this.app);
+    const p2 = new Player(p2Con, p2AbilityCon, this.physics, this.app);
     this.worldContainer.addChild(p2.getContainer());
     this.players.push(p2);
   }
 
   private createBalls(){
     this.balls.length = 0;
-    let ball1Con: BallConstruct = {
+    let ballCon: BallConstruct = {
       x: 0,
-      y: GAME_HEIGHT / 3,
+      y: 0,
       state: BALL_STATE.Neutral,
       side: TEAM_SIDE.Neither,
     }
 
-    let ball2Con: BallConstruct = {
-      x: 0,
-      y: -GAME_HEIGHT / 3,
-      state: BALL_STATE.Neutral,
-      side: TEAM_SIDE.Neither,
-    }
+    const ball1 = this.ballFactory.createBall(BALL_TYPE.Normal, ballCon, NORMAL_BALL_TYPE_CONST);
 
-    const ball1 = this.ballFactory.createBall(BALL_TYPE.Normal, ball1Con, NORMAL_BALL_TYPE_CONST);
+    ballCon.y = GAME_HEIGHT / 4;
+    const ball2 = this.ballFactory.createBall(BALL_TYPE.Normal, ballCon, NORMAL_BALL_TYPE_CONST); 
+
+    ballCon.y = -GAME_HEIGHT / 4;
+    const ball3 = this.ballFactory.createBall(BALL_TYPE.Normal, ballCon, NORMAL_BALL_TYPE_CONST); 
+
+
     this.worldContainer.addChild(ball1.getContainer());
-    const ball2 = this.ballFactory.createBall(BALL_TYPE.FireInfused, ball2Con, NORMAL_BALL_TYPE_CONST); 
     this.worldContainer.addChild(ball2.getContainer());
+    this.worldContainer.addChild(ball3.getContainer());
 
     this.balls.push(ball1)
     this.balls.push(ball2)
+    this.balls.push(ball3)
   }
 
   private getGameState(): GameStatePacket{
@@ -334,7 +354,15 @@ export class Game {
       if (bodyB === player.getBody()){
         player.handleCollision(bodyA, this.balls);
       }
+    }
 
+    for (const ball of this.balls){
+      if (bodyA === ball.getBody()){
+        ball.handleCollision(bodyB);
+      }
+      if (bodyB === ball.getBody()){
+        ball.handleCollision(bodyA);
+      }
     }
   }
 
@@ -405,7 +433,7 @@ export class Game {
       }
     
       if (!input) continue;
-      player.update(input.inputKeys, input.inputMouse, this.balls, dt)
+      player.update(input.inputKeys, input.inputMouse, this.ballFactory, this.worldContainer, this.balls, this.pendingBalls, dt)
     }
 
     this.physics.update();

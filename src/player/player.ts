@@ -10,8 +10,14 @@ import type { InputKeys, InputMouse } from '../input/input.ts';
 import { createCircleTexture } from '../utils/texture.ts';
 import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
 
+import { AbilityManager } from '../abilities/abilityManager';
+import { ABILITY_SLOT } from '../abilities/abilityManager';
 
-const DEFAULT_HEALTH = 100;
+import type { AbilityDefinition, AbilityState } from "../abilities/ability";
+import { BallFactory } from '../balls/ballFactory.ts';
+
+
+export const DEFAULT_HEALTH = 100;
 const CATCH_SQUARED_DIST = 3;
 const CATCH_ANGLE_BOUNDS = Math.PI / 8;
 const CATCH_COOLDOWN = 30;
@@ -30,7 +36,12 @@ export enum PLAYER_ID {
   P2,
 }
 
-interface PlayerConstruct {
+export interface PlayerAbilityConstruct {
+  abilites: AbilityDefinition[];
+  slots: Map<ABILITY_SLOT, string>;
+}
+
+export interface PlayerConstruct {
   id: PLAYER_ID,
   x: number,
   y: number,
@@ -47,6 +58,7 @@ export class Player {
   private container: Container;
   private sprite: Sprite;
   private body: planck.Body;
+  private abilityManager: AbilityManager;
 
   private size: number;
   private color: number;
@@ -70,6 +82,7 @@ export class Player {
 
   constructor(
     p: PlayerConstruct,
+    abilities: PlayerAbilityConstruct,
     physics: Physics, 
     app: Application,
   ) {
@@ -102,6 +115,8 @@ export class Player {
     this.resetX = p.x / PIXELS_PER_UNIT;
     this.resetY = p.y / PIXELS_PER_UNIT;
     this.resetHealth = p.health;
+
+    this.abilityManager = new AbilityManager(abilities.abilites, abilities.slots);
   }
 
   public reset(){
@@ -114,6 +129,19 @@ export class Player {
   public getId(){
     return this.id;
   }
+
+  public getSide(){
+    return this.side;
+  }
+
+  public getHolding(){
+    return this.holding;
+  }
+
+  public setHolding(ball: Ball){
+    this.holding = ball;
+  }
+
 
   public getContainer(){
     return this.container;
@@ -291,7 +319,7 @@ export class Player {
     this.holding.setVelocity(0, 0);
   }
 
-  public update(keyInput: InputKeys, mouseInput: InputMouse, balls: Ball[], dt: number){
+  private updateMove(dt: number, keyInput: InputKeys){
     const dir = new planck.Vec2(0, 0);
     const speedDt = this.speed * dt;
 
@@ -304,7 +332,30 @@ export class Player {
     dir.normalize();
     dir.mul(speedDt);
     this.body.applyForceToCenter(dir, true);
+  }
 
+  private updateAbility(keyInput: InputKeys, state: AbilityState){
+    if (keyInput.ability1){
+      this.abilityManager.activate(ABILITY_SLOT.Ability1, state);
+    }
+    if (keyInput.ability2){
+      this.abilityManager.activate(ABILITY_SLOT.Ability2, state);
+    }
+
+    this.abilityManager.update(this, state.balls);
+  }
+
+  public update(keyInput: InputKeys, mouseInput: InputMouse, ballFactory: BallFactory, worldContainer: Container, balls: Ball[], pendingBalls: Ball[], dt: number){
+    const state: AbilityState = {
+      ballFactory: ballFactory,
+      worldContainer: worldContainer,
+      player: this,
+      balls: balls,
+      pendingBalls: pendingBalls,
+    };
+
+    this.updateMove(dt, keyInput);
+    this.updateAbility(keyInput, state);
     this.updateAngle(mouseInput);
     this.updateHeld();
     this.throwBall(keyInput);
@@ -326,5 +377,3 @@ export class Player {
 
 }
 
-export { DEFAULT_HEALTH }
-export type { PlayerConstruct }
