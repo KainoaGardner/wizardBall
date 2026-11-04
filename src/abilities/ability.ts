@@ -1,14 +1,12 @@
-import { Player } from '../player/player.ts';
+import { Player, PLAYER_ID } from '../player/player.ts';
+import { Game } from '../game.ts';
 import { Ball } from '../balls/ball.ts';
 import type { BallFactory } from '../balls/ballFactory.ts';
 import { Container } from 'pixi.js';
 
 export interface AbilityState {
-  ballFactory: BallFactory,
-  worldContainer: Container,
-  player: Player,
-  balls: Ball[],
-  pendingBalls: Ball[]
+  game: Game,
+  playerId: PLAYER_ID,
 }
 
 export interface AbilityDefinition {
@@ -18,7 +16,7 @@ export interface AbilityDefinition {
   cooldown: number;
 
   activate(state: AbilityState): boolean;
-  update(player: Player, balls: Ball[]): void;
+  update(state: AbilityState): void;
 }
 
 export class Ability {
@@ -37,9 +35,9 @@ export class Ability {
     this.cooldownRemaining = this.definition.cooldown;
   }
 
-  public update(dt: number, player: Player, balls: Ball[]){
+  public update(dt: number, state: AbilityState){
     this.cooldownRemaining = Math.max(0, this.cooldownRemaining - 1);
     
-    this.definition.update(player, balls);
+    this.definition.update(state);
   }
 }

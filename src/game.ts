@@ -29,6 +29,8 @@ import { BallCallbacks } from './balls/ballCallbacks.ts';
 import { firestorm } from './abilities/wizards/fire.ts';
 import { ABILITY_SLOT } from './abilities/abilityManager.ts';
 
+import { Explosion } from './abilities/wizards/explosion.ts';
+
 
 export interface GameStatePacket {
   type: "gameState"
@@ -49,6 +51,7 @@ export class Game {
   private players: Player[] = [];
   private balls: Ball[] = [];
   private pendingBalls: Ball[] = [];
+  private explosions: Explosion[] = [];
   private worldContainer!: Container;
   private ballFactory!: BallFactory;
   private ballCallbacks!: BallCallbacks;
@@ -296,6 +299,26 @@ export class Game {
     
   }
 
+  public getPlayers(){
+    return this.players;
+  }
+
+  public getBalls(){
+    return this.balls;
+  }
+
+  public getPendingBalls(){
+    return this.pendingBalls;
+  }
+
+  public getBallFactory(){
+    return this.ballFactory;
+  }
+
+  public getWorldContainer(){
+    return this.worldContainer;
+  }
+
   private applyGameState(state: GameState){
     for (const playerState of state.players){
       const player = this.players.find(p => p.getId() === playerState.id);
@@ -385,6 +408,14 @@ export class Game {
     this.balls = this.balls.filter(b => b.isAlive())
   }
 
+  private updateExplosion(){
+    for (const explosion of this.explosions){
+      explosion.explosion(this.players, this.balls); 
+    }
+
+    this.explosions.length = 0;
+  }
+
   public update(time: Ticker){
     const frameTime = Math.min(time.deltaMS / 1000, 0.25);
     this.accumulator += frameTime;
@@ -433,9 +464,10 @@ export class Game {
       }
     
       if (!input) continue;
-      player.update(input.inputKeys, input.inputMouse, this.ballFactory, this.worldContainer, this.balls, this.pendingBalls, dt)
+      player.update(input.inputKeys, input.inputMouse, this, dt)
     }
 
+    this.updateExplosion();
     this.physics.update();
  
     this.updateUI();

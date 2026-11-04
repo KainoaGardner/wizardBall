@@ -37,7 +37,7 @@ export class AbilityManager {
     this.cooldowns.set(abilityId, ability.cooldown * (1 / STEP))
   }
 
-  update(player: Player, balls: Ball[]){
+  update(state: AbilityState){
     for (const [id, cooldown] of this.cooldowns){
       if (cooldown > 0){
         this.cooldowns.set(id, cooldown - 1);
@@ -45,7 +45,7 @@ export class AbilityManager {
     }
 
     for (const ability of this.abilites.values()){
-      ability.update(player, balls);
+      ability.update(state);
     }
   }
 

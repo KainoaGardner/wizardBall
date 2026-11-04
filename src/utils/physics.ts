@@ -1,4 +1,6 @@
 import planck from 'planck';
+import { Player } from '../player/player.ts';
+import { Ball } from '../balls/ball.ts';
 
 import { PIXELS_PER_UNIT, STEP } from './global.ts';
 
@@ -85,9 +87,5 @@ export class Physics{
     }
   }
 
+
 }
-
-
-
-
-

@@ -189,6 +189,10 @@ export class Ball {
     return this.pickupCooldown <= 0;
   }
 
+  public explode(){
+    this.kill();
+  }
+
   public pickup(side: TEAM_SIDE, color: number){
     this.side = side;
     this.state = BALL_STATE.Held;

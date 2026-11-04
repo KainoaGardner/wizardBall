@@ -1,7 +1,9 @@
 import planck, { MouseJoint } from 'planck';
 import { Application, Container, Sprite, Texture } from 'pixi.js';
 
+import { Game } from '../game.ts';
 import { Physics } from '../utils/physics.ts';
+
 import { Ball } from '../balls/ball.ts';
 import { BALL_STATE } from '../balls/types.ts';
 
@@ -71,6 +73,9 @@ export class Player {
   private holding: Ball | null = null;
 
   private side: TEAM_SIDE;
+
+  private knockbackSpeedX: number = 0;
+  private knockbackSpeedY: number = 0;
 
   private resetX: number;
   private resetY: number;
@@ -185,6 +190,11 @@ export class Player {
 
   public setPosition(x: number, y: number){
     this.body.setPosition(new planck.Vec2(x, y));
+  }
+
+  public setKnockbackSpeed(vx: number, vy: number){
+    this.knockbackSpeedX = vx;
+    this.knockbackSpeedY = vy;
   }
 
   public setAngle(angle: number){
@@ -332,6 +342,11 @@ export class Player {
     dir.normalize();
     dir.mul(speedDt);
     this.body.applyForceToCenter(dir, true);
+
+    const knockbackImpulse = new planck.Vec2(this.knockbackSpeedX, this.knockbackSpeedY);
+    this.body.applyLinearImpulse(knockbackImpulse, this.body.getWorldCenter(), true);
+    this.knockbackSpeedX = 0;
+    this.knockbackSpeedY = 0;
   }
 
   private updateAbility(keyInput: InputKeys, state: AbilityState){
@@ -342,16 +357,13 @@ export class Player {
       this.abilityManager.activate(ABILITY_SLOT.Ability2, state);
     }
 
-    this.abilityManager.update(this, state.balls);
+    this.abilityManager.update(state);
   }
 
-  public update(keyInput: InputKeys, mouseInput: InputMouse, ballFactory: BallFactory, worldContainer: Container, balls: Ball[], pendingBalls: Ball[], dt: number){
+  public update(keyInput: InputKeys, mouseInput: InputMouse, game: Game, dt: number){
     const state: AbilityState = {
-      ballFactory: ballFactory,
-      worldContainer: worldContainer,
-      player: this,
-      balls: balls,
-      pendingBalls: pendingBalls,
+      game: game,
+      playerId: this.id,
     };
 
     this.updateMove(dt, keyInput);
@@ -360,7 +372,7 @@ export class Player {
     this.updateHeld();
     this.throwBall(keyInput);
     this.dropBall(keyInput);
-    this.catchBall(keyInput, balls);
+    this.catchBall(keyInput, game.getBalls());
   }
 
   public updateRender() {

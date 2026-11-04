@@ -24,6 +24,7 @@
 import type { AbilityDefinition, AbilityState } from "../ability";
 import { Player } from '../../player/player.ts';
 import { Ball } from '../../balls/ball.ts';
+import { Game } from '../../game.ts';
 import type { BallConstruct } from '../../balls/types.ts';
 import { BALL_TYPE, NORMAL_BALL_TYPE_CONST, BALL_STATE } from '../../balls/types.ts';
 
@@ -43,10 +44,20 @@ export const armageddon: AbilityDefinition = {
   cooldown: 20,
 
   activate(state: AbilityState){
-    return true;
+    let count = 0;
+    const player = state.game.getPlayers().find(p => p.getId() === state.playerId);
+    if (!player) return false;
+
+    for (const ball of state.game.getBalls()){
+      if (ball.getSide() !== player.getSide()) continue;
+
+      ball.explode();
+      count++;
+    }
+    return count > 0;
   },
 
-  update(player: Player, balls: Ball[]){
+  update(state: AbilityState){
 
   }
 }
@@ -58,8 +69,10 @@ export const firestorm: AbilityDefinition = {
   cooldown: 15,
 
   activate(state: AbilityState): boolean {
-    console.log("firestorm")
-    const heldBall = state.player.getHolding()
+    const player = state.game.getPlayers().find(p => p.getId() === state.playerId);
+    if (!player) return false;
+
+    const heldBall = player.getHolding()
     if (!heldBall) return false;
 
     heldBall.kill();
@@ -68,20 +81,20 @@ export const firestorm: AbilityDefinition = {
       x: 0,
       y: 0,
       state: BALL_STATE.Held,
-      side: state.player.getSide(),
+      side: player.getSide(),
     }
 
-    const infusedBall = state.ballFactory.createBall(BALL_TYPE.FireInfused, infusedBallCon, NORMAL_BALL_TYPE_CONST); 
-    state.worldContainer.addChild(infusedBall.getContainer());
-    state.pendingBalls.push(infusedBall)
+    const infusedBall = state.game.getBallFactory().createBall(BALL_TYPE.FireInfused, infusedBallCon, NORMAL_BALL_TYPE_CONST); 
+    state.game.getWorldContainer().addChild(infusedBall.getContainer());
+    state.game.getPendingBalls().push(infusedBall)
 
-    state.player.setHolding(infusedBall)
-    infusedBall.pickup(state.player.getSide(), state.player.getColor());
+    player.setHolding(infusedBall)
+    infusedBall.pickup(player.getSide(), player.getColor());
 
     return true;
   },
 
-  update(player: Player, balls: Ball[]){
+  update(state: AbilityState){
 
   }
 }
@@ -96,7 +109,7 @@ export const supernova: AbilityDefinition = {
     return true;
   },
 
-  update(player: Player, balls: Ball[]){
+  update(state: AbilityState){
 
   }
 }
