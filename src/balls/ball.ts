@@ -6,38 +6,13 @@ import { Physics } from '../utils/physics.ts';
 import { createCircleTexture } from '../utils/texture.ts';
 import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
 
+import { BALL_TYPE, BALL_STATE } from './types.ts';
+import type { BallConstruct, BallState, BallTypeConstruct } from './types.ts';
+
 const BALL_RESET_SPEED = 5; 
 const BALL_THROW_SPEED = 100.0;
 
 const PICKUP_COOLDOWN = 15;
-
-export interface BallState {
-  id: number;
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  color: number;
-}
-
-interface BallConstruct {
-  id: number,
-  x: number,
-  y: number,
-  size: number,
-  speed: number,
-  airResist: number,
-  color: number,
-  state: number,
-  side: number,
-  damage: number,
-}
-
-export enum BALL_STATE {
-  Neutral,
-  Held,
-  Thrown,
-}
 
 export class Ball {
   private id: number;
@@ -45,15 +20,16 @@ export class Ball {
   private sprite: Sprite;
   private body: planck.Body;
 
+  private type: BALL_TYPE;
   private size: number;
   private defaultColor: number;
   private color: number;
-  private speed: number;
 
-  private state: number;
-  private side: number;
+  private state: BALL_STATE;
+  private side: TEAM_SIDE;
 
   private damage: number;
+  private speed: number;
 
   private airResist: number;
 
@@ -63,42 +39,44 @@ export class Ball {
 
   private pickupCooldown: number = 0;
 
+  private alive: boolean = true;
+
   constructor(
+    id: number,
     ball: BallConstruct,
+    ballTypeConst: BallTypeConstruct,
     physics: Physics, 
     app: Application,
   ) {
 
-    this.id = ball.id;
-    this.size = ball.size;
-    this.color = ball.color;
-    this.defaultColor = ball.color;
-    this.speed = ball.speed;
+    this.id = id;
+    this.type = ballTypeConst.type;
+    this.size = ballTypeConst.size;
+    this.color = ballTypeConst.color;
+    this.defaultColor = ballTypeConst.color;
     this.state = ball.state;
     this.side = ball.side;
+    this.speed = ballTypeConst.speed;
 
-    this.damage = ball.damage;
+    this.damage = ballTypeConst.damage;
 
     this.container = new Container();
     this.container.x = ball.x;
     this.container.y = ball.y;
 
-    const circleTex = createCircleTexture(app, ball.size, ball.color);
+    const circleTex = createCircleTexture(app, ballTypeConst.size, ballTypeConst.color);
     this.sprite = new Sprite(circleTex);
     this.sprite.anchor.set(0.5);
     this.container.addChild(this.sprite);
 
-    this.body = physics.createBallBody(ball.x, ball.y, ball.size);
-    this.airResist = ball.airResist;
+    this.body = physics.createBallBody(ball.x, ball.y, ballTypeConst.size);
+    this.airResist = ballTypeConst.airResist;
 
-    this.body.setLinearDamping(ball.airResist);
+    this.body.setLinearDamping(ballTypeConst.airResist);
 
     this.resetX = ball.x / PIXELS_PER_UNIT;
     this.resetY = ball.y / PIXELS_PER_UNIT;
-    this.resetSize = ball.size;
-
-    this
-
+    this.resetSize = ballTypeConst.size;
   }
 
   public reset(){
@@ -110,6 +88,15 @@ export class Ball {
 
   public getId(){
     return this.id;
+  }
+
+  public isAlive(){
+    return this.alive;
+  }
+
+  public kill(){
+    this.alive = false;
+    this.body.setActive(false);
   }
 
   public getContainer(): Container {
@@ -159,6 +146,11 @@ export class Ball {
       vx: vel.x,
       vy: vel.y,
       color: this.color,
+      type: this.type,
+      alive: this.alive,
+      state: this.state,
+      side: this.side,
+      speed: this.speed,
     };
   }
 
@@ -166,6 +158,10 @@ export class Ball {
     this.setPosition(ballState.x, ballState.y);
     this.setVelocity(ballState.vx, ballState.vy);
     this.setColor(ballState.color);
+    this.alive = ballState.alive;
+    this.state = ballState.state;
+    this.side = ballState.side;
+    this.speed = ballState.speed;
   }
 
   public setPosition(x: number, y: number){
@@ -174,6 +170,10 @@ export class Ball {
 
   public setVelocity(vx: number, vy: number){
     this.body.setLinearVelocity(new planck.Vec2(vx, vy));
+  }
+
+  public getColor(){
+    return this.color;
   }
 
   private setColor(color: number){
@@ -224,7 +224,24 @@ export class Ball {
     
   }
 
+  public onCollision(other: Ball){
+
+  }
+
+  public throw(angle: number, color: number){
+    this.setState(BALL_STATE.Thrown);
+    this.setColor(color);
+
+    const direction = new planck.Vec2(Math.cos(angle), Math.sin(angle));
+    direction.normalize();
+
+    this.body.setLinearVelocity(direction.mul(this.speed));
+  }
+
+  public destory(physics: Physics): void {
+    physics.getWorld().destroyBody(this.body);
+    this.container.destroy();
+  }
 }
 
-export type { BallConstruct }
 export { BALL_THROW_SPEED, BALL_RESET_SPEED }

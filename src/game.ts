@@ -13,14 +13,19 @@ import type { InputKeys, InputMouse } from './input/input.ts';
 import { Player, DEFAULT_HEALTH, PLAYER_ID } from './player/player.ts';
 import type { PlayerConstruct, PlayerState } from './player/player.ts';
 
-import { Ball, BALL_STATE } from './balls/ball.ts';
-import type { BallConstruct, BallState } from './balls/ball.ts';
+import { Ball } from './balls/ball.ts';
+
+import { BALL_TYPE, NORMAL_BALL_TYPE_CONST, BALL_STATE } from './balls/types.ts';
+import type { BallConstruct, BallState,  } from './balls/types.ts';
 
 import type { UIState } from './ui/ui.ts';
 import { HealthBar, HEALTH_BAR_PADDING, DIRECTION } from './ui/healthbar.ts';
 import type { HealthBarConstruct } from './ui/healthbar.ts';
 
 import { GAME_WIDTH, GAME_HEIGHT, PLAY_WIDTH, PLAY_HEIGHT, PIXELS_PER_UNIT, WALL_THICKNESS, MID_WALL_THICKNESS, TEAM_SIDE, STEP } from './utils/global.ts';
+import { BallFactory } from './balls/ballFactory.ts';
+import { BallCallbacks } from './balls/ballCallbacks.ts';
+
 
 export interface GameStatePacket {
   type: "gameState"
@@ -40,7 +45,10 @@ export class Game {
 
   private players: Player[] = [];
   private balls: Ball[] = [];
-  private worldContainer!: Container
+  private pendingBalls: Ball[] = [];
+  private worldContainer!: Container;
+  private ballFactory!: BallFactory;
+  private ballCallbacks!: BallCallbacks;
 
   private physics: Physics = new Physics();
   private input!: Input; 
@@ -63,12 +71,30 @@ export class Game {
   private setup(){
     this.createNetwork();
     this.createWorld();
+
+    this.createBallCallbacks();
+    this.createBallFactory();
+
     this.setupInput();
     this.createWalls();
     this.createPlayers();
     this.createBalls();
     this.createUI();
     this.handleCollision();
+  }
+
+  private createBallFactory(){
+    this.ballFactory = new BallFactory(
+      this.physics,
+      this.app, 
+      (con, angle, color) => this.ballCallbacks.spawnFireball(con, angle, color), 
+    );
+
+    this.ballCallbacks.setBallFactory(this.ballFactory);
+  }
+
+  private createBallCallbacks(){
+    this.ballCallbacks = new BallCallbacks(this.pendingBalls);
   }
 
   private resetGame(){
@@ -211,56 +237,27 @@ export class Game {
 
   private createBalls(){
     this.balls.length = 0;
-    const ball1Con: BallConstruct = {
-      id: 0,
+    let ball1Con: BallConstruct = {
       x: 0,
       y: GAME_HEIGHT / 3,
-      size: 100,
-      speed: 3500,
-      airResist: 1.0,
-      color: 0xFFFFFF,
       state: BALL_STATE.Neutral,
       side: TEAM_SIDE.Neither,
-      damage: 50,
     }
 
-    const ball2Con: BallConstruct = {
-      id: 1,
-      x: 0,
-      y: 0,
-      size: 40,
-      speed: 1000,
-      airResist: 1.5,
-      color: 0xFFFFFF,
-      state: BALL_STATE.Neutral,
-      side: TEAM_SIDE.Neither,
-      damage: 30,
-    }
-
-    const ball3Con: BallConstruct = {
-      id: 2,
+    let ball2Con: BallConstruct = {
       x: 0,
       y: -GAME_HEIGHT / 3,
-      size: 25,
-      speed: 350,
-      airResist: 1.0,
-      color: 0xFFFFFF,
       state: BALL_STATE.Neutral,
       side: TEAM_SIDE.Neither,
-      damage: 25,
     }
 
-    const ball1 = new Ball(ball1Con, this.physics, this.app);
+    const ball1 = this.ballFactory.createBall(BALL_TYPE.Normal, ball1Con, NORMAL_BALL_TYPE_CONST);
     this.worldContainer.addChild(ball1.getContainer());
-    const ball2 = new Ball(ball2Con, this.physics, this.app);
+    const ball2 = this.ballFactory.createBall(BALL_TYPE.FireInfused, ball2Con, NORMAL_BALL_TYPE_CONST); 
     this.worldContainer.addChild(ball2.getContainer());
-    const ball3 = new Ball(ball3Con, this.physics, this.app);
-    this.worldContainer.addChild(ball3.getContainer());
-
 
     this.balls.push(ball1)
     this.balls.push(ball2)
-    this.balls.push(ball3)
   }
 
   private getGameState(): GameStatePacket{
@@ -288,13 +285,33 @@ export class Game {
       player.setPlayerState(playerState);
     }
 
-    for (const ballState of state.balls){
-      const ball = this.balls.find(b => b.getId() === ballState.id);
+    const hostBallIds = new Set(state.balls.map(b => b.id));
+    for (const ball of this.balls){
+      if (!hostBallIds.has(ball.getId())){
+        ball.kill();
+      } 
+    }
 
-      if (!ball) continue;
+    for (const ballState of state.balls){
+      let ball = this.balls.find(b => b.getId() === ballState.id);
+
+      if (!ball){
+        const ballCon: BallConstruct = {
+          x: ballState.x,
+          y: ballState.y,
+          state: ballState.state,
+          side: ballState.side,
+        }
+        ball = this.ballFactory.createBall(ballState.type, ballCon, NORMAL_BALL_TYPE_CONST);
+
+        this.worldContainer.addChild(ball.getContainer());
+        this.balls.push(ball)
+      };
 
       ball.setBallState(ballState);
     }
+
+    
 
     this.UI.setUIState(state.ui);
 
@@ -321,6 +338,25 @@ export class Game {
     }
   }
 
+  private updateNewBalls(){
+    for (const ball of this.pendingBalls) {
+      this.balls.push(ball);
+      this.worldContainer.addChild(ball.getContainer());
+    }
+    this.pendingBalls.length = 0;
+  }
+
+
+  private updateDeadBalls(){
+    const deadBalls = this.balls.filter(b => !b.isAlive())
+
+    for (const ball of deadBalls){
+      ball.destory(this.physics)
+    }
+
+    this.balls = this.balls.filter(b => b.isAlive())
+  }
+
   public update(time: Ticker){
     const frameTime = Math.min(time.deltaMS / 1000, 0.25);
     this.accumulator += frameTime;
@@ -335,6 +371,7 @@ export class Game {
     }
 
   }
+
 
   private updateUI(){
     const p1 = this.players.find(p => p.getId() === PLAYER_ID.P1);
@@ -356,7 +393,7 @@ export class Game {
 
   private updateHost(dt: number){
     for (const ball of this.balls){
-        ball.update(dt);
+      ball.update(dt);
     }
 
     for (const player of this.players){
@@ -375,6 +412,8 @@ export class Game {
  
     this.updateUI();
     this.updateDeath();
+    this.updateDeadBalls();
+    this.updateNewBalls();
     this.network.sendGameState(this.getGameState());
   }
   
@@ -384,6 +423,8 @@ export class Game {
       inputKeys: this.input.getLocalInput(),
       inputMouse: this.input.getMouseInput(),
     })
+
+    this.updateDeadBalls();
   }
   
   public render(){

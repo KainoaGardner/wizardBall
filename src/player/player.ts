@@ -2,7 +2,8 @@ import planck, { MouseJoint } from 'planck';
 import { Application, Container, Sprite, Texture } from 'pixi.js';
 
 import { Physics } from '../utils/physics.ts';
-import { Ball, BALL_STATE, BALL_THROW_SPEED } from '../balls/ball.ts';
+import { Ball } from '../balls/ball.ts';
+import { BALL_STATE } from '../balls/types.ts';
 
 import type { InputKeys, InputMouse } from '../input/input.ts';
 
@@ -62,6 +63,8 @@ export class Player {
   private resetX: number;
   private resetY: number;
   private resetHealth: number;
+
+  private alive: boolean = true;
 
   private catchCooldown: number = CATCH_COOLDOWN;
 
@@ -164,8 +167,6 @@ export class Player {
     this.body.setLinearVelocity(new planck.Vec2(vx, vy));
   }
 
-
-
   private takeDamage(damage: number){
     this.health = Math.max(this.health - damage, 0); 
   }
@@ -249,17 +250,8 @@ export class Player {
     if (!this.holding || !inputKeys.throw) return;
     
     const ball = this.holding;
-    ball.setState(BALL_STATE.Thrown);
     this.holding = null;
-
-    const pos = ball.getBody().getPosition();
-    const angle = this.body.getAngle();    
-    const direction = new planck.Vec2(Math.cos(angle), Math.sin(angle));
-    direction.normalize();
-
-    ball.getBody().applyForceToCenter(
-      direction.mul(ball.getSpeed())
-    );
+    ball.throw(this.body.getAngle(), this.color);
   }
 
   private dropBall(inputKeys: InputKeys){
@@ -296,6 +288,7 @@ export class Player {
     const ballX = pos.x + Math.cos(this.body.getAngle()) * radius;
     const ballY = pos.y + Math.sin(this.body.getAngle()) * radius;
     this.holding.setPosition(ballX, ballY);
+    this.holding.setVelocity(0, 0);
   }
 
   public update(keyInput: InputKeys, mouseInput: InputMouse, balls: Ball[], dt: number){
@@ -324,6 +317,11 @@ export class Player {
 
     this.container.x = pos.x * PIXELS_PER_UNIT;
     this.container.y = pos.y * PIXELS_PER_UNIT;
+  }
+
+  public destory(physics: Physics): void {
+    physics.getWorld().destroyBody(this.body);
+    this.container.destroy();
   }
 
 }
