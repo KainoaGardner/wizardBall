@@ -9,6 +9,9 @@ import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
 import { BALL_TYPE, BALL_STATE } from './types.ts';
 import type { BallConstruct, BallState, BallTypeConstruct } from './types.ts';
 
+import { Explosion } from '../abilities/wizards/explosion.ts';
+import { Player } from '../player/player.ts';
+
 const BALL_RESET_SPEED = 5; 
 const BALL_THROW_SPEED = 100.0;
 
@@ -28,10 +31,14 @@ export class Ball {
   private state: BALL_STATE;
   private side: TEAM_SIDE;
 
+  private heldBy: Player | null = null;
+
   private damage: number;
   private speed: number;
 
   private airResist: number;
+  private knockbackSpeedX: number = 0;
+  private knockbackSpeedY: number = 0;
 
   private resetX: number;
   private resetY: number;
@@ -96,6 +103,7 @@ export class Ball {
 
   public kill(){
     this.alive = false;
+    this.heldBy = null;
     this.body.setActive(false);
   }
 
@@ -154,6 +162,11 @@ export class Ball {
     };
   }
 
+  public setKnockbackSpeed(vx: number, vy: number){
+    this.knockbackSpeedX = vx;
+    this.knockbackSpeedY = vy;
+  }
+
   public setBallState(ballState: BallState){
     this.setPosition(ballState.x, ballState.y);
     this.setVelocity(ballState.vx, ballState.vy);
@@ -189,15 +202,23 @@ export class Ball {
     return this.pickupCooldown <= 0;
   }
 
-  public explode(){
+  public explode(explosions: Explosion[], size: number, force: number){
+    const pos = this.body.getPosition();
+    const explosion = new Explosion(pos.x, pos.y, (this.size + size) / 5, force);
+    explosions.push(explosion);
+    if (this.heldBy){
+      this.heldBy.setHolding(null);
+    }
+
     this.kill();
   }
 
-  public pickup(side: TEAM_SIDE, color: number){
+  public pickup(player: Player, side: TEAM_SIDE, color: number){
     this.side = side;
     this.state = BALL_STATE.Held;
     this.setColor(color);
     this.applyPickupcooldown();
+    this.heldBy = player;
   }
   
   private updatePickup(){
@@ -208,6 +229,12 @@ export class Ball {
   public update(dt: number){
     this.updatePickup();
     const speed = this.body.getLinearVelocity().length();
+
+    const knockbackImpulse = new planck.Vec2(this.knockbackSpeedX, this.knockbackSpeedY);
+    this.body.applyLinearImpulse(knockbackImpulse, this.body.getWorldCenter(), true);
+    this.knockbackSpeedX = 0;
+    this.knockbackSpeedY = 0;
+
     if (this.state === BALL_STATE.Thrown && speed < BALL_RESET_SPEED){
       this.resetBall();
     }
@@ -218,6 +245,7 @@ export class Ball {
     this.state = BALL_STATE.Neutral;
     this.setColor(this.defaultColor);
     this.applyPickupcooldown();
+    this.heldBy = null;
   }
 
   public updateRender() {
@@ -231,10 +259,15 @@ export class Ball {
   public handleCollision(otherBody: planck.Body){
 
   }
+  
+  public drop(){
+    this.heldBy = null;
+  }
 
   public throw(angle: number, color: number){
     this.setState(BALL_STATE.Thrown);
     this.setColor(color);
+    this.heldBy = null;
 
     const direction = new planck.Vec2(Math.cos(angle), Math.sin(angle));
     direction.normalize();

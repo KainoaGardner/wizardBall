@@ -21,7 +21,8 @@ export class Explosion {
       const dy = playerPos.y - this.y;
 
       const dist = dx * dx + dy * dy;
-      const falloff = Math.exp(-1 * dist);
+      const normalDist = Math.min(dist / this.size, 1);
+      const falloff = Math.exp(-3 * normalDist);
       const force = this.force * falloff;
       const dirX = dx / dist;
       const dirY = dy / dist;
@@ -35,12 +36,13 @@ export class Explosion {
       const dy = ballPos.y - this.y;
 
       const dist = dx * dx + dy * dy;
-      const falloff = Math.exp(-1 * dist);
+      const normalDist = Math.min(dist / this.size, 1);
+      const falloff = Math.exp(-3 * normalDist);
       const force = this.force * falloff;
       const dirX = dx / dist;
       const dirY = dy / dist;
-    
-      // ball.setKnockbackSpeed(dirX * force, dirY * force);
+
+      ball.setKnockbackSpeed(dirX * force, dirY * force);
     }
   }
 

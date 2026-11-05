@@ -4,7 +4,7 @@ export enum BALL_TYPE {
   Normal,
   FireInfused,
   Fire,
-  // Explosion,
+  ExplosionInfused,
 }
 
 export interface BallState {

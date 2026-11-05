@@ -32,9 +32,9 @@ import { BallFactory } from '../../balls/ballFactory.ts';
 import { Container } from 'pixi.js';
 
 export enum EXPLOSION_SIZE {
-  Small = 5,
-  Medium = 10,
-  Large = 50,
+  Small = 25,
+  Medium = 50,
+  Large = 100,
 }
 
 export const armageddon: AbilityDefinition = {
@@ -51,9 +51,10 @@ export const armageddon: AbilityDefinition = {
     for (const ball of state.game.getBalls()){
       if (ball.getSide() !== player.getSide()) continue;
 
-      ball.explode();
+      ball.explode(state.game.getExplosion(), EXPLOSION_SIZE.Medium, EXPLOSION_SIZE.Medium);
       count++;
     }
+
     return count > 0;
   },
 
@@ -89,7 +90,7 @@ export const firestorm: AbilityDefinition = {
     state.game.getPendingBalls().push(infusedBall)
 
     player.setHolding(infusedBall)
-    infusedBall.pickup(player.getSide(), player.getColor());
+    infusedBall.pickup(player, player.getSide(), player.getColor());
 
     return true;
   },
@@ -106,6 +107,28 @@ export const supernova: AbilityDefinition = {
   cooldown: 30,
 
   activate(state: AbilityState){
+    const player = state.game.getPlayers().find(p => p.getId() === state.playerId);
+    if (!player) return false;
+
+    const heldBall = player.getHolding()
+    if (!heldBall) return false;
+
+    heldBall.kill();
+    
+    let infusedBallCon: BallConstruct = {
+      x: 0,
+      y: 0,
+      state: BALL_STATE.Held,
+      side: player.getSide(),
+    }
+
+    const infusedBall = state.game.getBallFactory().createBall(BALL_TYPE.ExplosionInfused, infusedBallCon, NORMAL_BALL_TYPE_CONST); 
+    state.game.getWorldContainer().addChild(infusedBall.getContainer());
+    state.game.getPendingBalls().push(infusedBall)
+
+    player.setHolding(infusedBall)
+    infusedBall.pickup(player, player.getSide(), player.getColor());
+
     return true;
   },
 

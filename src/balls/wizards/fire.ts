@@ -1,3 +1,4 @@
+import planck from 'planck';
 import type { Application } from 'pixi.js';
 import type { Physics } from '../../utils/physics.ts';
 
@@ -7,6 +8,7 @@ import { Ball,  } from '../../balls/ball.ts';
 
 import { BALL_STATE, BALL_TYPE } from '../../balls/types.ts';
 import type { BallConstruct, BallTypeConstruct } from '../../balls/types.ts';
+import type { Explosion } from '../../abilities/wizards/explosion.ts';
 
 export type SpawnFireball = (
   ballCon: BallConstruct,
@@ -82,4 +84,36 @@ export class Fireball extends Ball {
     }
   }
 
+}
+
+export class ExplosionInfusedBall extends Ball {
+  private explosions: Explosion[];
+  private explosionSize: number;
+  private explosionForce: number;
+
+  constructor(id: number, ball: BallConstruct, ballTypeConst: BallTypeConstruct, physics: Physics, app: Application, explosions: Explosion[], explosionSize: number, explosionForce: number){
+    super(
+      id,
+      ball,
+      {
+        ...ballTypeConst, 
+        size: 50,
+        speed: 17,
+        airResist: 1.0,
+        damage: 25,
+        type: BALL_TYPE.ExplosionInfused,
+      },
+      physics,
+      app);
+
+    this.explosions = explosions;
+    this.explosionSize = explosionSize;
+    this.explosionForce = explosionForce;
+  }
+
+  public override handleCollision(otherBody: planck.Body){
+    // if (this.getState() === BALL_STATE.Thrown) return;
+
+    this.explode(this.explosions, this.explosionSize, this.explosionForce);
+  }
 }

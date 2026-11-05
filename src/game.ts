@@ -26,7 +26,7 @@ import { GAME_WIDTH, GAME_HEIGHT, PLAY_WIDTH, PLAY_HEIGHT, PIXELS_PER_UNIT, WALL
 import { BallFactory } from './balls/ballFactory.ts';
 import { BallCallbacks } from './balls/ballCallbacks.ts';
 
-import { firestorm } from './abilities/wizards/fire.ts';
+import { armageddon, firestorm, supernova } from './abilities/wizards/fire.ts';
 import { ABILITY_SLOT } from './abilities/abilityManager.ts';
 
 import { Explosion } from './abilities/wizards/explosion.ts';
@@ -94,6 +94,7 @@ export class Game {
       this.physics,
       this.app, 
       (con, angle, color) => this.ballCallbacks.spawnFireball(con, angle, color), 
+      this.explosions,
     );
 
     this.ballCallbacks.setBallFactory(this.ballFactory);
@@ -222,16 +223,18 @@ export class Game {
     }
 
     const p1AbilityCon: PlayerAbilityConstruct = {
-      abilites: [firestorm], 
+      abilites: [firestorm, armageddon], 
       slots: new Map([
         [ABILITY_SLOT.Ability1, firestorm.id],
+        [ABILITY_SLOT.Ability2, armageddon.id],
       ]),
     };
 
     const p2AbilityCon: PlayerAbilityConstruct = {
-      abilites: [firestorm], 
+      abilites: [firestorm, supernova], 
       slots: new Map([
         [ABILITY_SLOT.Ability1, firestorm.id],
+        [ABILITY_SLOT.Ability2, supernova.id],
       ]),
     };
   
@@ -317,6 +320,10 @@ export class Game {
 
   public getWorldContainer(){
     return this.worldContainer;
+  }
+
+  public getExplosion(){
+    return this.explosions;
   }
 
   private applyGameState(state: GameState){
@@ -467,9 +474,9 @@ export class Game {
       player.update(input.inputKeys, input.inputMouse, this, dt)
     }
 
-    this.updateExplosion();
     this.physics.update();
  
+    this.updateExplosion();
     this.updateUI();
     this.updateDeath();
     this.updateDeadBalls();

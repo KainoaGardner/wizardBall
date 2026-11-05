@@ -143,10 +143,9 @@ export class Player {
     return this.holding;
   }
 
-  public setHolding(ball: Ball){
+  public setHolding(ball: Ball | null){
     this.holding = ball;
   }
-
 
   public getContainer(){
     return this.container;
@@ -271,7 +270,7 @@ export class Player {
     if (!caughtBall) return;
 
     this.holding = caughtBall;
-    this.holding.pickup(this.side, this.color);
+    this.holding.pickup(this, this.side, this.color);
   }
 
   private pickupBall(ball: Ball){
@@ -280,7 +279,7 @@ export class Player {
     if (ball.getState() === BALL_STATE.Thrown && ball.getSide() !== this.side) return;
     if (!ball.canPickup()) return;
 
-    ball.pickup(this.side, this.color);
+    ball.pickup(this, this.side, this.color);
     this.holding = ball;
   }
 
@@ -299,8 +298,6 @@ export class Player {
     ball.resetBall();
     ball.setVelocity(0, 0);
     this.holding = null;
-    // ball.setState(BALL_STATE.Thrown);
-    // ball.applyPickupcooldown();
   }
 
   public handleCollision(otherBody: planck.Body, balls: Ball[]){
