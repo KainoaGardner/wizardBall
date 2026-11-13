@@ -3,6 +3,7 @@ import { Physics } from '../utils/physics.ts';
 import type { BallConstruct, BallTypeConstruct } from './types.ts';
 import { Ball } from '../balls/ball.ts';
 import { ExplosionInfusedBall, Fireball, FireInfusedBall, type SpawnFireball } from './wizards/fire.ts';
+import { WallBall, ColossusBall } from './wizards/earth.ts';
 
 import { BALL_TYPE } from './types.ts';
 import type { Explosion } from '../abilities/wizards/explosion.ts';
@@ -37,6 +38,13 @@ export class BallFactory {
       case BALL_TYPE.ExplosionInfused:
         result = new ExplosionInfusedBall(this.ballId, ball, ballTypeConst, this.physics, this.app, this.explosions, EXPLOSION_SIZE.Large, EXPLOSION_SIZE.Large);
         break;
+      case BALL_TYPE.Wall:
+        result = new WallBall(this.ballId, ball, ballTypeConst, this.physics, this.app);
+        break;
+      case BALL_TYPE.Colossus:
+        result = new ColossusBall(this.ballId, ball, ballTypeConst, this.physics, this.app);
+        break;
+
       default:
         result = new Ball(this.ballId, ball, ballTypeConst, this.physics, this.app);
     }

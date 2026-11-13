@@ -204,7 +204,7 @@ export class Player {
     this.body.setLinearVelocity(new planck.Vec2(vx, vy));
   }
 
-  private takeDamage(damage: number){
+  public takeDamage(damage: number){
     this.health = Math.max(this.health - damage, 0); 
   }
 
@@ -212,6 +212,7 @@ export class Player {
     if (!(ball.getState() === BALL_STATE.Thrown && ball.getSide() !== this.side)) return;
     
     this.takeDamage(ball.getDamage());
+    ball.setJustHit();
     ball.resetBall();
   }
 

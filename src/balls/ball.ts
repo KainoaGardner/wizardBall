@@ -29,7 +29,7 @@ export class Ball {
   private color: number;
 
   private state: BALL_STATE;
-  private side: TEAM_SIDE;
+  protected side: TEAM_SIDE;
 
   private heldBy: Player | null = null;
 
@@ -40,13 +40,16 @@ export class Ball {
   private knockbackSpeedX: number = 0;
   private knockbackSpeedY: number = 0;
 
-  private resetX: number;
-  private resetY: number;
+  protected resetX: number;
+  protected resetY: number;
   private resetSize: number;
 
   private pickupCooldown: number = 0;
 
   private alive: boolean = true;
+
+  protected justGrabbed: boolean = false;
+  protected justHit: boolean = false;
 
   constructor(
     id: number,
@@ -104,7 +107,6 @@ export class Ball {
   public kill(){
     this.alive = false;
     this.heldBy = null;
-    this.body.setActive(false);
   }
 
   public getContainer(): Container {
@@ -137,6 +139,10 @@ export class Ball {
 
   public getPosition(){
     return this.body.getPosition()
+  }
+
+  public setJustHit(){
+    this.justHit = true;
   }
 
   public setState(state: BALL_STATE){
@@ -219,6 +225,7 @@ export class Ball {
     this.setColor(color);
     this.applyPickupcooldown();
     this.heldBy = player;
+    this.justGrabbed = true;
   }
   
   private updatePickup(){
@@ -226,7 +233,14 @@ export class Ball {
     this.pickupCooldown = Math.max(this.pickupCooldown - 1, 0);
   }
 
+  private updateJust(){
+    if (this.justGrabbed) this.justGrabbed = false;
+    if (this.justHit) this.justHit = false;
+  }
+
   public update(dt: number){
+    this.updateJust();
+
     this.updatePickup();
     const speed = this.body.getLinearVelocity().length();
 

@@ -2,7 +2,7 @@ import planck from 'planck';
 import type { Application } from 'pixi.js';
 import type { Physics } from '../../utils/physics.ts';
 
-import { PIXELS_PER_UNIT } from '../../utils/global.ts';
+import { PIXELS_PER_UNIT, TEAM_SIDE } from '../../utils/global.ts';
 
 import { Ball,  } from '../../balls/ball.ts';
 
@@ -98,9 +98,9 @@ export class ExplosionInfusedBall extends Ball {
       {
         ...ballTypeConst, 
         size: 50,
-        speed: 17,
-        airResist: 1.0,
-        damage: 25,
+        speed: 15,
+        airResist: 0.5,
+        damage: 0,
         type: BALL_TYPE.ExplosionInfused,
       },
       physics,
@@ -112,7 +112,8 @@ export class ExplosionInfusedBall extends Ball {
   }
 
   public override handleCollision(otherBody: planck.Body){
-    // if (this.getState() === BALL_STATE.Thrown) return;
+    if (this.getSide() === TEAM_SIDE.Neither && !this.justHit) return;
+    if (this.justGrabbed) return;
 
     this.explode(this.explosions, this.explosionSize, this.explosionForce);
   }

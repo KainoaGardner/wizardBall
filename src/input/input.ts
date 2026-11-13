@@ -10,6 +10,7 @@ interface InputKeys {
   catch: boolean;
   ability1: boolean;
   ability2: boolean;
+  reset: boolean;
 }
 
 interface InputMouse {
@@ -28,6 +29,7 @@ export class Input {
     catch: false,
     ability1: false,
     ability2: false,
+    reset: false,
   };
 
   private mousePos: InputMouse = {
@@ -53,6 +55,7 @@ export class Input {
       if (e.key === ' ') this.localInput.catch = true;
       if (e.key === 'q') this.localInput.ability1 = true;
       if (e.key === 'e') this.localInput.ability2 = true;
+      if (e.key === 'v') this.localInput.reset = true;
     });
   
     window.addEventListener('keyup', (e) => {
@@ -63,6 +66,7 @@ export class Input {
       if (e.key === ' ') this.localInput.catch = false;
       if (e.key === 'q') this.localInput.ability1 = false;
       if (e.key === 'e') this.localInput.ability2 = false;
+      if (e.key === 'v') this.localInput.reset = false;
     });   
   }
 

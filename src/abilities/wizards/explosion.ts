@@ -28,6 +28,7 @@ export class Explosion {
       const dirY = dy / dist;
     
       player.setKnockbackSpeed(dirX * force, dirY * force);
+      player.takeDamage(force);
     }
 
     for (const ball of balls){

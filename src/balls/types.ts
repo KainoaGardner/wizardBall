@@ -5,6 +5,9 @@ export enum BALL_TYPE {
   FireInfused,
   Fire,
   ExplosionInfused,
+  Wall,
+  Colossus,
+  LightRay,
 }
 
 export interface BallState {

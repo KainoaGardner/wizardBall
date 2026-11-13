@@ -27,6 +27,7 @@ import { BallFactory } from './balls/ballFactory.ts';
 import { BallCallbacks } from './balls/ballCallbacks.ts';
 
 import { armageddon, firestorm, supernova } from './abilities/wizards/fire.ts';
+import { stoneBastion, earthquake, colossus } from './abilities/wizards/earth.ts';
 import { ABILITY_SLOT } from './abilities/abilityManager.ts';
 
 import { Explosion } from './abilities/wizards/explosion.ts';
@@ -110,9 +111,14 @@ export class Game {
     }
 
     for (const ball of this.balls){
-      ball.reset();
+      ball.destory(this.physics)
     }
 
+    this.balls.length = 0;
+    this.createBalls();
+
+    this.pendingBalls.length = 0;
+    this.explosions.length = 0;
   }
 
   private createUI(){
@@ -200,11 +206,11 @@ export class Game {
   }
 
   private createWalls(){
-    this.physics.createWallBody((-PLAY_WIDTH / 2) / PIXELS_PER_UNIT - WALL_THICKNESS / 2, 0, WALL_THICKNESS, PLAY_HEIGHT / PIXELS_PER_UNIT)
-    this.physics.createWallBody((GAME_WIDTH / 2) / PIXELS_PER_UNIT + WALL_THICKNESS / 2, 0, WALL_THICKNESS, PLAY_HEIGHT / PIXELS_PER_UNIT)
+    this.physics.createWallBody((-PLAY_WIDTH / 2) / PIXELS_PER_UNIT - WALL_THICKNESS / 2, 0, WALL_THICKNESS, PLAY_HEIGHT * 2 / PIXELS_PER_UNIT)
+    this.physics.createWallBody((GAME_WIDTH / 2) / PIXELS_PER_UNIT + WALL_THICKNESS / 2, 0, WALL_THICKNESS, PLAY_HEIGHT * 2 / PIXELS_PER_UNIT)
     this.physics.createWallBody(0, 0, MID_WALL_THICKNESS, PLAY_HEIGHT / PIXELS_PER_UNIT, true)
-    this.physics.createWallBody(0, (-PLAY_HEIGHT / 2) / PIXELS_PER_UNIT - WALL_THICKNESS / 2, PLAY_WIDTH / PIXELS_PER_UNIT, WALL_THICKNESS)
-    this.physics.createWallBody(0, (PLAY_HEIGHT / 2) / PIXELS_PER_UNIT + WALL_THICKNESS / 2, PLAY_WIDTH / PIXELS_PER_UNIT, WALL_THICKNESS)
+    this.physics.createWallBody(0, (-PLAY_HEIGHT / 2) / PIXELS_PER_UNIT - WALL_THICKNESS / 2, PLAY_WIDTH * 2 / PIXELS_PER_UNIT, WALL_THICKNESS)
+    this.physics.createWallBody(0, (PLAY_HEIGHT / 2) / PIXELS_PER_UNIT + WALL_THICKNESS / 2, PLAY_WIDTH * 2 / PIXELS_PER_UNIT, WALL_THICKNESS)
   }
 
   private createPlayers(){
@@ -223,10 +229,10 @@ export class Game {
     }
 
     const p1AbilityCon: PlayerAbilityConstruct = {
-      abilites: [firestorm, armageddon], 
+      abilites: [earthquake, colossus], 
       slots: new Map([
-        [ABILITY_SLOT.Ability1, firestorm.id],
-        [ABILITY_SLOT.Ability2, armageddon.id],
+        [ABILITY_SLOT.Ability1, earthquake.id],
+        [ABILITY_SLOT.Ability2, colossus.id],
       ]),
     };
 
@@ -472,6 +478,7 @@ export class Game {
     
       if (!input) continue;
       player.update(input.inputKeys, input.inputMouse, this, dt)
+      if (input.inputKeys.reset) this.resetGame();
     }
 
     this.physics.update();
