@@ -14,30 +14,38 @@ export interface AbilityDefinition {
   name: string;
   description: string;
   cooldown: number;
+  variables?: Record<string, number>;
 
-  activate(state: AbilityState): boolean;
-  update(state: AbilityState): void;
+  activate(state: AbilityState, variables: Record<string, number>): boolean;
+  update(state: AbilityState, variables: Record<string, number>): void;
 }
 
 export class Ability {
   private definition: AbilityDefinition;
   private cooldownRemaining: number = 0;
+  private variables: Record<string, number> = {};
 
   constructor(definition: AbilityDefinition){
     this.definition = definition;
+    this.variables = {...(definition.variables ?? {})}
   }
 
+  public getDefinition(){
+    return this.definition;
+  }
 
-  public activate(state: AbilityState){
-    if (this.cooldownRemaining > 0) return;
+  public activate(state: AbilityState): boolean{
+    if (this.cooldownRemaining > 0) return false;
     
-    this.definition.activate(state);
+    const result = this.definition.activate(state, this.variables);
+    if (!result) return false;
+
     this.cooldownRemaining = this.definition.cooldown;
+    return true;
   }
 
-  public update(dt: number, state: AbilityState){
+  public update(state: AbilityState){
     this.cooldownRemaining = Math.max(0, this.cooldownRemaining - 1);
-    
-    this.definition.update(state);
+    this.definition.update(state, this.variables);
   }
 }

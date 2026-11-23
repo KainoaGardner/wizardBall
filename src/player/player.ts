@@ -15,7 +15,7 @@ import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
 import { AbilityManager } from '../abilities/abilityManager';
 import { ABILITY_SLOT } from '../abilities/abilityManager';
 
-import type { AbilityDefinition, AbilityState } from "../abilities/ability";
+import type { Ability, AbilityDefinition, AbilityState } from "../abilities/ability";
 import { BallFactory } from '../balls/ballFactory.ts';
 
 
@@ -31,6 +31,8 @@ export interface PlayerState {
   angle: number;
   vx: number;
   vy: number;
+  mosX: number;
+  mosY: number;
 }
 
 export enum PLAYER_ID {
@@ -39,8 +41,7 @@ export enum PLAYER_ID {
 }
 
 export interface PlayerAbilityConstruct {
-  abilites: AbilityDefinition[];
-  slots: Map<ABILITY_SLOT, string>;
+  slots: Map<ABILITY_SLOT, Ability>;
 }
 
 export interface PlayerConstruct {
@@ -77,9 +78,13 @@ export class Player {
   private knockbackSpeedX: number = 0;
   private knockbackSpeedY: number = 0;
 
+  private resetSpeed: number;
   private resetX: number;
   private resetY: number;
   private resetHealth: number;
+
+  private mosX: number = 0;
+  private mosY: number = 0;
 
   private alive: boolean = true;
 
@@ -117,11 +122,12 @@ export class Player {
 
     this.body.setLinearDamping(p.airResist);
 
+    this.resetSpeed = p.speed;
     this.resetX = p.x / PIXELS_PER_UNIT;
     this.resetY = p.y / PIXELS_PER_UNIT;
     this.resetHealth = p.health;
 
-    this.abilityManager = new AbilityManager(abilities.abilites, abilities.slots);
+    this.abilityManager = new AbilityManager(abilities.slots);
   }
 
   public reset(){
@@ -170,6 +176,8 @@ export class Player {
       angle: this.body.getAngle(),
       vx: vel.x,
       vy: vel.y,
+      mosX: this.mosX,
+      mosY: this.mosY,
     };
   }
 
@@ -181,10 +189,20 @@ export class Player {
     this.setPosition(playerState.x, playerState.y);
     this.setAngle(playerState.angle);
     this.setVelocity(playerState.vx, playerState.vy);
+    this.setMosPos(playerState.mosX, playerState.mosY)
+  }
+
+  public setMosPos(mosX: number, mosY: number){
+    this.mosX = mosX;
+    this.mosY = mosY;
   }
 
   public getPosition(){
     return this.body.getPosition();
+  }
+
+  public getMosPos(){
+    return {x: this.mosX, y: this.mosY}
   }
 
   public setPosition(x: number, y: number){
@@ -199,6 +217,19 @@ export class Player {
   public setAngle(angle: number){
     this.body.setAngle(angle);
   }
+
+  public setSpeed(speed: number){
+    this.speed = speed;
+  }
+
+  public getSpeed(){
+    return this.speed;
+  }
+
+  public getBaseSpeed(){
+    return this.resetSpeed;
+  }
+
 
   public setVelocity(vx: number, vy: number){
     this.body.setLinearVelocity(new planck.Vec2(vx, vy));
@@ -219,6 +250,8 @@ export class Player {
   private updateAngle(mousePos: InputMouse){
     const pos = this.body.getPosition();
     const scaledMousePos = {x: mousePos.x / PIXELS_PER_UNIT, y: mousePos.y / PIXELS_PER_UNIT};
+    this.mosX = scaledMousePos.x;
+    this.mosY = scaledMousePos.y;
     const angle = Math.atan2(scaledMousePos.y - pos.y, scaledMousePos.x - pos.x);
     this.setAngle(angle);
   }

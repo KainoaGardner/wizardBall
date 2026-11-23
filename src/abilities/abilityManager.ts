@@ -1,3 +1,4 @@
+import { Ability } from "./ability";
 import type { AbilityDefinition, AbilityState } from "./ability";
 
 import { Ball } from '../balls/ball.ts';
@@ -12,29 +13,24 @@ export enum ABILITY_SLOT {
 }
 
 export class AbilityManager {
-  private abilites: Map<string, AbilityDefinition>;
-  private slots: Map<ABILITY_SLOT, string>;
+  private slots: Map<ABILITY_SLOT, Ability>;
   private cooldowns: Map<string, number> = new Map();
 
-  constructor(abilites: AbilityDefinition[], slots: Map<ABILITY_SLOT, string>){
-    this.abilites = new Map(abilites.map(a => [a.id, a]));
+  constructor(slots: Map<ABILITY_SLOT, Ability>){
     this.slots = slots;
   }
 
   activate(slot: ABILITY_SLOT, state: AbilityState){
-    const abilityId = this.slots.get(slot);
-    if (!abilityId) return;
-
-    const ability = this.abilites.get(abilityId);
+    const ability = this.slots.get(slot);
     if (!ability) return;
 
-    const cooldown = this.cooldowns.get(abilityId) ?? 0;
+    const cooldown = this.cooldowns.get(ability.getDefinition().id) ?? 0;
     if (cooldown > 0) return;
     
     const used = ability.activate(state);
     if (!used) return; 
 
-    this.cooldowns.set(abilityId, ability.cooldown * (1 / STEP))
+    this.cooldowns.set(ability.getDefinition().id, ability.getDefinition().cooldown * (1 / STEP))
   }
 
   update(state: AbilityState){
@@ -44,13 +40,12 @@ export class AbilityManager {
       }
     }
 
-    for (const ability of this.abilites.values()){
+    for (const ability of this.slots.values()){
       ability.update(state);
     }
   }
 
-  setSlot(slot: ABILITY_SLOT, abilityId: string){
-    if (!this.abilites.has(abilityId)) return;
-    this.slots.set(slot, abilityId);
+  setSlot(slot: ABILITY_SLOT, ability: Ability){
+    this.slots.set(slot, ability);
   }
 }

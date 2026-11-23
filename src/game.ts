@@ -27,10 +27,14 @@ import { BallFactory } from './balls/ballFactory.ts';
 import { BallCallbacks } from './balls/ballCallbacks.ts';
 
 import { armageddon, firestorm, supernova } from './abilities/wizards/fire.ts';
-import { stoneBastion, earthquake, colossus } from './abilities/wizards/earth.ts';
+import { earthWall, earthquake, colossus } from './abilities/wizards/earth.ts';
+import { blink, blitz, thunderbolt } from './abilities/wizards/lightning.ts';
+
 import { ABILITY_SLOT } from './abilities/abilityManager.ts';
 
 import { Explosion } from './abilities/wizards/explosion.ts';
+import { WallBall } from './balls/wizards/earth.ts';
+import { Ability } from './abilities/ability.ts';
 
 
 export interface GameStatePacket {
@@ -90,6 +94,8 @@ export class Game {
     this.handleCollision();
   }
 
+
+
   private createBallFactory(){
     this.ballFactory = new BallFactory(
       this.physics,
@@ -104,8 +110,8 @@ export class Game {
   private createBallCallbacks(){
     this.ballCallbacks = new BallCallbacks(this.pendingBalls);
   }
-
-  private resetGame(){
+  
+  private resetRound(){
     for (const player of this.players){
       player.reset();
     }
@@ -114,9 +120,32 @@ export class Game {
       ball.destory(this.physics)
     }
 
-    this.balls.length = 0;
+    this.destoryBalls();
     this.createBalls();
+  }
 
+  private resetGame(){
+    this.destoryPlayers();
+    this.destoryBalls();
+
+    this.createPlayers();
+    this.createBalls();
+  }
+
+  private destoryPlayers(){
+    for (const player of this.players){
+      player.destory(this.physics);
+    }
+
+    this.players.length = 0;
+  }
+
+  private destoryBalls(){
+    for (const ball of this.balls){
+      ball.destory(this.physics)
+    }
+
+    this.balls.length = 0;
     this.pendingBalls.length = 0;
     this.explosions.length = 0;
   }
@@ -229,18 +258,16 @@ export class Game {
     }
 
     const p1AbilityCon: PlayerAbilityConstruct = {
-      abilites: [earthquake, colossus], 
       slots: new Map([
-        [ABILITY_SLOT.Ability1, earthquake.id],
-        [ABILITY_SLOT.Ability2, colossus.id],
+        [ABILITY_SLOT.Ability1, new Ability(blink)],
+        [ABILITY_SLOT.Ability2, new Ability(thunderbolt)],
       ]),
     };
 
     const p2AbilityCon: PlayerAbilityConstruct = {
-      abilites: [firestorm, supernova], 
       slots: new Map([
-        [ABILITY_SLOT.Ability1, firestorm.id],
-        [ABILITY_SLOT.Ability2, supernova.id],
+        [ABILITY_SLOT.Ability1, new Ability(blink)],
+        [ABILITY_SLOT.Ability2, new Ability(blitz)],
       ]),
     };
   
@@ -332,6 +359,10 @@ export class Game {
     return this.explosions;
   }
 
+  public getInput(){
+    return this.input;
+  }
+
   private applyGameState(state: GameState){
     for (const playerState of state.players){
       const player = this.players.find(p => p.getId() === playerState.id);
@@ -367,10 +398,7 @@ export class Game {
       ball.setBallState(ballState);
     }
 
-    
-
     this.UI.setUIState(state.ui);
-
   }
 
   private handleCollision(){
@@ -456,7 +484,7 @@ export class Game {
   private updateDeath(){
     for (const player of this.players){
       if (player.getNormalHealth() <= 0){
-        this.resetGame();
+        this.resetRound();
         break;
       }
     }

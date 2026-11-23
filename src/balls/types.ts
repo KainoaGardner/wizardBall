@@ -7,7 +7,7 @@ export enum BALL_TYPE {
   ExplosionInfused,
   Wall,
   Colossus,
-  LightRay,
+  Bolt,
 }
 
 export interface BallState {

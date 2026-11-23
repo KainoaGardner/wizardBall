@@ -43,7 +43,7 @@ export const armageddon: AbilityDefinition = {
   description: "Detonate all your active balls at once. Each explosion destroys the ball that triggered it and any other balls caught within its blast radius.",
   cooldown: 20,
 
-  activate(state: AbilityState){
+  activate(state: AbilityState, variables: Record<string, number>){
     let count = 0;
     const player = state.game.getPlayers().find(p => p.getId() === state.playerId);
     if (!player) return false;
@@ -58,7 +58,7 @@ export const armageddon: AbilityDefinition = {
     return count > 0;
   },
 
-  update(state: AbilityState){
+  update(state: AbilityState, variables: Record<string, number>){
 
   }
 }
@@ -69,7 +69,7 @@ export const firestorm: AbilityDefinition = {
   description: "Infuse a held ball with fiery energy. When thrown, it splits into 3 smaller fireballs.",
   cooldown: 15,
 
-  activate(state: AbilityState): boolean {
+  activate(state: AbilityState, variables: Record<string, number>): boolean {
     const player = state.game.getPlayers().find(p => p.getId() === state.playerId);
     if (!player) return false;
 
@@ -95,7 +95,7 @@ export const firestorm: AbilityDefinition = {
     return true;
   },
 
-  update(state: AbilityState){
+  update(state: AbilityState, variables: Record<string, number>){
 
   }
 }
@@ -106,7 +106,7 @@ export const supernova: AbilityDefinition = {
   description: "Infuse a held ball with explosive energy. When thrown, it detonates on its first collision, creating a massive explosion that destroys nearby balls caught in the blast. The ball cannot bounce.",
   cooldown: 30,
 
-  activate(state: AbilityState){
+  activate(state: AbilityState, variables: Record<string, number>){
     const player = state.game.getPlayers().find(p => p.getId() === state.playerId);
     if (!player) return false;
 
@@ -132,7 +132,7 @@ export const supernova: AbilityDefinition = {
     return true;
   },
 
-  update(state: AbilityState){
+  update(state: AbilityState, variables: Record<string, number>){
 
   }
 }

@@ -4,6 +4,7 @@ import type { BallConstruct, BallTypeConstruct } from './types.ts';
 import { Ball } from '../balls/ball.ts';
 import { ExplosionInfusedBall, Fireball, FireInfusedBall, type SpawnFireball } from './wizards/fire.ts';
 import { WallBall, ColossusBall } from './wizards/earth.ts';
+import { BoltBall } from './wizards/lightning.ts';
 
 import { BALL_TYPE } from './types.ts';
 import type { Explosion } from '../abilities/wizards/explosion.ts';
@@ -44,6 +45,10 @@ export class BallFactory {
       case BALL_TYPE.Colossus:
         result = new ColossusBall(this.ballId, ball, ballTypeConst, this.physics, this.app);
         break;
+      case BALL_TYPE.Bolt:
+        result = new BoltBall(this.ballId, ball, ballTypeConst, this.physics, this.app);
+        break;
+
 
       default:
         result = new Ball(this.ballId, ball, ballTypeConst, this.physics, this.app);

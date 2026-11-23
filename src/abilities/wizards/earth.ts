@@ -1,6 +1,6 @@
 // --EARTH
 // -ABILITY
-// 1. Stone Bastion:
+// 1. Earth Wall:
 //   make walls (place ball it stays for while)
 //
 // 2. Colossus:
@@ -22,13 +22,13 @@ import { Container } from 'pixi.js';
 import { PIXELS_PER_UNIT } from "../../utils/global.ts";
 
 
-export const stoneBastion: AbilityDefinition = {
-  id: "stonebastion",
-  name: "Stone Bastion",
+export const earthWall: AbilityDefinition = {
+  id: "earthWall",
+  name: "Earth Wall",
   description: "Transform your held ball into a stationary stone barrier, increasing its size to block incoming balls for a limited time.",
-  cooldown: 10,
+  cooldown: 3,
 
-  activate(state: AbilityState){
+  activate(state: AbilityState, variables: Record<string, number>){
     const player = state.game.getPlayers().find(p => p.getId() === state.playerId);
     if (!player) return false;
 
@@ -56,7 +56,7 @@ export const stoneBastion: AbilityDefinition = {
 
   },
 
-  update(state: AbilityState){
+  update(state: AbilityState, variables: Record<string, number>){
 
   }
 }
@@ -67,7 +67,7 @@ export const colossus: AbilityDefinition = {
   description: "Infuse your next ball with the power of earth, transforming it into a massive, slow-moving boulder that deals devastating damage and cannot be stopped.",
   cooldown: 25,
 
-  activate(state: AbilityState): boolean {
+  activate(state: AbilityState, variables: Record<string, number>): boolean {
     const player = state.game.getPlayers().find(p => p.getId() === state.playerId);
     if (!player) return false;
 
@@ -93,7 +93,7 @@ export const colossus: AbilityDefinition = {
     return true;
   },
 
-  update(state: AbilityState){
+  update(state: AbilityState, variables: Record<string, number>){
 
   }
 }
@@ -104,7 +104,7 @@ export const earthquake: AbilityDefinition = {
   description: "Slam the ground with immense force, instantly bringing all balls to a halt by removing their momentum and velocity.",
   cooldown: 30,
 
-  activate(state: AbilityState){
+  activate(state: AbilityState, variables: Record<string, number>){
     const player = state.game.getPlayers().find(p => p.getId() === state.playerId);
     if (!player) return false;
 
@@ -115,7 +115,7 @@ export const earthquake: AbilityDefinition = {
     return true;
   },
 
-  update(state: AbilityState){
+  update(state: AbilityState, variables: Record<string, number>){
 
   }
 }

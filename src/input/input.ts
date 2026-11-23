@@ -119,6 +119,10 @@ export class Input {
   public getMouseInput(){
     return this.mousePos;
   }
+
+  public setMousePos(mosPos: InputMouse){
+    this.mousePos = mosPos;
+  }
 }
 
 
