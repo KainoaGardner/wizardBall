@@ -4,10 +4,11 @@ import { Ball } from '../balls/ball.ts';
 
 import { PIXELS_PER_UNIT, STEP } from './global.ts';
 
-enum COLLISION_GROUPS {
+export enum COLLISION_GROUPS {
   Player = 0x0001,
   Ball = 0x0002,
   Wall = 0x0004,
+  MidWall = 0x0008,
 }
 
 export class Physics{
@@ -37,7 +38,7 @@ export class Physics{
     body.createFixture({
       shape: new planck.Circle(radius / PIXELS_PER_UNIT),
       filterCategoryBits: COLLISION_GROUPS.Player,
-      filterMaskBits: COLLISION_GROUPS.Player | COLLISION_GROUPS.Wall | COLLISION_GROUPS.Ball,
+      filterMaskBits: COLLISION_GROUPS.Player | COLLISION_GROUPS.Wall | COLLISION_GROUPS.MidWall | COLLISION_GROUPS.Ball,
       density: 1,
       friction: 0,
     });
@@ -71,8 +72,8 @@ export class Physics{
     if (middleWall){
       wall.createFixture({
         shape: new planck.Box(width / 2, height / 2),
-        filterCategoryBits: COLLISION_GROUPS.Wall,
-        filterMaskBits: COLLISION_GROUPS.Player | COLLISION_GROUPS.Wall,
+        filterCategoryBits: COLLISION_GROUPS.MidWall,
+        filterMaskBits: COLLISION_GROUPS.Player,
         restitution: 0.8,
         friction: 0,
       })
@@ -80,7 +81,7 @@ export class Physics{
       wall.createFixture({
         shape: new planck.Box(width / 2, height / 2),
         filterCategoryBits: COLLISION_GROUPS.Wall,
-        filterMaskBits: COLLISION_GROUPS.Player | COLLISION_GROUPS.Wall | COLLISION_GROUPS.Ball,
+        filterMaskBits: COLLISION_GROUPS.Player | COLLISION_GROUPS.Ball,
         restitution: 0.8,
         friction: 0,
       })

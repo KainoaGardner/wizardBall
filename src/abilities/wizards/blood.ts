@@ -11,11 +11,6 @@
 
 import type { AbilityDefinition, AbilityState } from "../ability";
 
-import type { BallConstruct } from '../../balls/types.ts';
-import { BALL_TYPE, NORMAL_BALL_TYPE_CONST, BALL_STATE } from '../../balls/types.ts';
-
-import { PLAY_WIDTH, PLAY_HEIGHT, PIXELS_PER_UNIT, TEAM_SIDE, MID_WALL_THICKNESS } from '../../utils/global.ts';
-
 export const HEALTH_PER_DAMAGE = 0.5;
 export const HEALTH_PER_COOLDOWN = 0.5;
 

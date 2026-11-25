@@ -9,6 +9,7 @@ import { BoltBall } from './wizards/lightning.ts';
 import { BALL_TYPE } from './types.ts';
 import type { Explosion } from '../abilities/wizards/explosion.ts';
 import { EXPLOSION_SIZE } from '../abilities/wizards/fire.ts';
+import { WaterBall } from './wizards/water.ts';
 
 
 export class BallFactory {
@@ -18,13 +19,14 @@ export class BallFactory {
   
   private spawnFireball: SpawnFireball;
   private explosions: Explosion[];
+  private balls: Ball[];
 
-  constructor(physics: Physics, app: Application, spawnFireball: SpawnFireball, explosions: Explosion[]){
+  constructor(physics: Physics, app: Application, spawnFireball: SpawnFireball, explosions: Explosion[], balls: Ball[]){
     this.physics = physics;
     this.app = app;
     this.spawnFireball = spawnFireball;
     this.explosions = explosions;
-  
+    this.balls = balls;
   }
 
   public createBall(type: BALL_TYPE, ball: BallConstruct, ballTypeConst: BallTypeConstruct){
@@ -48,7 +50,9 @@ export class BallFactory {
       case BALL_TYPE.Bolt:
         result = new BoltBall(this.ballId, ball, ballTypeConst, this.physics, this.app);
         break;
-
+      case BALL_TYPE.Water:
+        result = new WaterBall(this.ballId, ball, ballTypeConst, this.physics, this.app, this.balls);
+        break;
 
       default:
         result = new Ball(this.ballId, ball, ballTypeConst, this.physics, this.app);

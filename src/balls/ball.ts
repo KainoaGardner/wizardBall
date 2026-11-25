@@ -5,6 +5,7 @@ import { Physics } from '../utils/physics.ts';
 
 import { createCircleTexture } from '../utils/texture.ts';
 import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
+import { COLLISION_GROUPS } from '../utils/physics.ts';
 
 import { BALL_TYPE, BALL_STATE } from './types.ts';
 import type { BallConstruct, BallState, BallTypeConstruct } from './types.ts';
@@ -37,6 +38,11 @@ export class Ball {
   private extraDamage: number = 0;
   private speed: number;
 
+  private freezeDuration: number = 0;
+  private frozen: boolean = false;
+  private frozenVX: number = 0;
+  private frozenVY: number = 0;
+
   private airResist: number;
   private knockbackSpeedX: number = 0;
   private knockbackSpeedY: number = 0;
@@ -47,6 +53,7 @@ export class Ball {
 
   private pickupCooldown: number = 0;
 
+  private sleep: boolean = false;
   private alive: boolean = true;
 
   protected justGrabbed: boolean = false;
@@ -107,6 +114,9 @@ export class Ball {
 
   public kill(){
     this.alive = false;
+    if (this.heldBy){
+      this.heldBy.setHolding(null);
+    }
     this.heldBy = null;
   }
 
@@ -134,14 +144,52 @@ export class Ball {
     return this.size; 
   }
 
+  public getType(){
+    return this.type;
+  }
+
+  public setSize(size: number){
+    this.size = size;
+
+    const diaSize = size * 2;
+    this.sprite.scale.set(diaSize / this.sprite.texture.width);
+
+    this.setPhysicsSize(size);
+  }
+
+  public setPhysicsSize(size: number){
+    const fixture = this.body.getFixtureList();
+    if (!fixture) return;
+
+    this.body.destroyFixture(fixture);
+
+    this.body.createFixture({
+        shape: new planck.Circle(size / PIXELS_PER_UNIT),
+        filterCategoryBits: COLLISION_GROUPS.Ball,
+        filterMaskBits:
+            COLLISION_GROUPS.Player |
+            COLLISION_GROUPS.Wall |
+            COLLISION_GROUPS.Ball,
+        density: 1,
+        friction: 0,
+    });
+  }
+
   public getDamage(){
     return this.damage + this.extraDamage; 
+  }
+
+  public getBaseDamage(){
+    return this.damage; 
   }
 
   public getExtraDamage(){
     return this.extraDamage; 
   }
 
+  public setDamage(damage: number){
+    this.damage = damage;
+  }
 
   public setExtraDamage(damage: number){
     this.extraDamage = damage; 
@@ -157,6 +205,48 @@ export class Ball {
 
   public setState(state: BALL_STATE){
     this.state = state;
+  }
+
+  public freeze(duration: number){
+    this.freezeDuration = duration;
+    this.frozen = true;
+    const velocity = this.body.getLinearVelocity();
+    this.setFrozenVelocity(velocity.x, velocity.y);
+    this.setSleep(true);
+    this.body.setType("static");
+  }
+
+  public unfreeze(){
+    if (!this.frozen) return;
+    this.frozen = false;
+
+    this.body.setType("dynamic");
+    this.setSleep(false);
+    const velocity = this.getFrozenVelocity();
+    this.setVelocity(velocity.vx, velocity.vy);
+    this.setFrozenVelocity(0, 0);
+
+  }
+
+  private setFrozenVelocity(x: number, y: number){
+    this.frozenVX = x;
+    this.frozenVY = y;
+  }
+
+  private getFrozenVelocity(){
+    return {vx: this.frozenVX, vy: this.frozenVY};
+  }
+
+  public setSleep(sleep: boolean){
+    this.sleep = sleep;
+  }
+
+  public getSleep(){
+    return this.sleep
+  }
+
+  public getBallType(){
+    return this.type;
   }
 
   public getBallState(): BallState {
@@ -248,7 +338,16 @@ export class Ball {
     if (this.justHit) this.justHit = false;
   }
 
+  private updateFreeze(){
+    if (this.freezeDuration <= 0) return;
+    this.freezeDuration = Math.max(this.freezeDuration - 1, 0);
+    if (this.freezeDuration <= 0) this.unfreeze();
+  }
+
   public update(dt: number){
+    this.updateFreeze();
+    if (this.sleep) return;
+
     this.updateJust();
 
     this.updatePickup();

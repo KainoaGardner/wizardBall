@@ -248,7 +248,9 @@ export class Player {
   }
 
   private hit(ball: Ball){
+    if (ball.getSleep()) return;
     if (!(ball.getState() === BALL_STATE.Thrown && ball.getSide() !== this.side)) return;
+
     
     this.takeDamage(ball.getDamage());
     ball.setJustHit();
@@ -281,6 +283,7 @@ export class Player {
     let minDist = Number.POSITIVE_INFINITY;
     for (const ball of balls){
       if (ball.getState() !== BALL_STATE.Thrown || ball.getSide() === this.side) continue;
+      if (ball.getSleep()) continue;
       
       const ballPos = ball.getPosition();
       const playerPos = this.getPosition();
@@ -317,6 +320,7 @@ export class Player {
 
   private pickupBall(ball: Ball){
     if (this.holding !== null) return;
+    if (ball.getSleep()) return;
     if (ball.getState() === BALL_STATE.Held) return;
     if (ball.getState() === BALL_STATE.Thrown && ball.getSide() !== this.side) return;
     if (!ball.canPickup()) return;

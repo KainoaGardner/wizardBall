@@ -8,6 +8,7 @@ export enum BALL_TYPE {
   Wall,
   Colossus,
   Bolt,
+  Water,
 }
 
 export interface BallState {

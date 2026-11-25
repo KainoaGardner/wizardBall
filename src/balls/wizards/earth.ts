@@ -28,11 +28,13 @@ export class WallBall extends Ball {
       },
       physics,
       app);
+
+    const body = this.getBody();
+    body.setType("static");
+    this.setSleep(true);
   }
 
   public override update(dt: number){
-    this.setPosition(this.resetX, this.resetY);
-    this.setVelocity(0, 0);
     this.side = TEAM_SIDE.Neither;
 
     this.lifeCounter = Math.max(0, this.lifeCounter - 1);

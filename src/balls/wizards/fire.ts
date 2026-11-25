@@ -18,7 +18,7 @@ export type SpawnFireball = (
 
 
 export const SPAWN_FIREBALL_ANGLE = Math.PI / 12;
-export const FIREBALL_LIFE_TIME = 60;
+export const FIREBALL_LIFE_TIME = 60 * 1.5;
 
 export class FireInfusedBall extends Ball {
   spawnFireball: SpawnFireball;

@@ -37,6 +37,8 @@ import { WallBall } from './balls/wizards/earth.ts';
 import { Ability } from './abilities/ability.ts';
 import { galeForce, recall, windburst } from './abilities/wizards/wind.ts';
 import { bloodlust, bloodTransfusion, vitalityDrain } from './abilities/wizards/blood.ts';
+import { celestialRing, holyJudgment, reflection } from './abilities/wizards/light.ts';
+import { flowState, permafrost, waterOrb } from './abilities/wizards/water.ts';
 
 
 export interface GameStatePacket {
@@ -104,6 +106,7 @@ export class Game {
       this.app, 
       (con, angle, color) => this.ballCallbacks.spawnFireball(con, angle, color), 
       this.explosions,
+      this.balls,
     );
 
     this.ballCallbacks.setBallFactory(this.ballFactory);
@@ -261,15 +264,15 @@ export class Game {
 
     const p1AbilityCon: PlayerAbilityConstruct = {
       slots: new Map([
-        [ABILITY_SLOT.Ability1, new Ability(bloodTransfusion)],
-        [ABILITY_SLOT.Ability2, new Ability(recall)],
+        [ABILITY_SLOT.Ability1, new Ability(waterOrb)],
+        [ABILITY_SLOT.Ability2, new Ability(flowState)],
       ]),
     };
 
     const p2AbilityCon: PlayerAbilityConstruct = {
       slots: new Map([
-        [ABILITY_SLOT.Ability1, new Ability(recall)],
-        [ABILITY_SLOT.Ability2, new Ability(galeForce)],
+        [ABILITY_SLOT.Ability1, new Ability(earthWall)],
+        [ABILITY_SLOT.Ability2, new Ability(celestialRing)],
       ]),
     };
   
