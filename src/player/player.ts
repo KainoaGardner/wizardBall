@@ -234,13 +234,17 @@ export class Player {
     return this.resetSpeed;
   }
 
+  public getAbilityManager(){
+    return this.abilityManager;
+  }
+
 
   public setVelocity(vx: number, vy: number){
     this.body.setLinearVelocity(new planck.Vec2(vx, vy));
   }
 
   public takeDamage(damage: number){
-    this.health = Math.max(this.health - damage, 0); 
+    this.health = Math.min(Math.max(this.health - damage, 0), this.resetHealth); 
   }
 
   private hit(ball: Ball){

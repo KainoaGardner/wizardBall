@@ -34,6 +34,7 @@ export class Ball {
   private heldBy: Player | null = null;
 
   private damage: number;
+  private extraDamage: number = 0;
   private speed: number;
 
   private airResist: number;
@@ -134,7 +135,16 @@ export class Ball {
   }
 
   public getDamage(){
-    return this.damage; 
+    return this.damage + this.extraDamage; 
+  }
+
+  public getExtraDamage(){
+    return this.extraDamage; 
+  }
+
+
+  public setExtraDamage(damage: number){
+    this.extraDamage = damage; 
   }
 
   public getPosition(){

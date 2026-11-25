@@ -20,7 +20,7 @@ export class AbilityManager {
     this.slots = slots;
   }
 
-  activate(slot: ABILITY_SLOT, state: AbilityState){
+  public activate(slot: ABILITY_SLOT, state: AbilityState){
     const ability = this.slots.get(slot);
     if (!ability) return;
 
@@ -33,7 +33,7 @@ export class AbilityManager {
     this.cooldowns.set(ability.getDefinition().id, ability.getDefinition().cooldown * (1 / STEP))
   }
 
-  update(state: AbilityState){
+  public update(state: AbilityState){
     for (const [id, cooldown] of this.cooldowns){
       if (cooldown > 0){
         this.cooldowns.set(id, cooldown - 1);
@@ -45,7 +45,11 @@ export class AbilityManager {
     }
   }
 
-  setSlot(slot: ABILITY_SLOT, ability: Ability){
+  public getCooldowns(){
+    return this.cooldowns;
+  }
+  
+  public setSlot(slot: ABILITY_SLOT, ability: Ability){
     this.slots.set(slot, ability);
   }
 }
