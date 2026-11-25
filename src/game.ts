@@ -26,19 +26,19 @@ import { GAME_WIDTH, GAME_HEIGHT, PLAY_WIDTH, PLAY_HEIGHT, PIXELS_PER_UNIT, WALL
 import { BallFactory } from './balls/ballFactory.ts';
 import { BallCallbacks } from './balls/ballCallbacks.ts';
 
-import { armageddon, firestorm, supernova } from './abilities/wizards/fire.ts';
-import { earthWall, earthquake, colossus } from './abilities/wizards/earth.ts';
-import { blink, blitz, thunderbolt } from './abilities/wizards/lightning.ts';
-
-import { ABILITY_SLOT } from './abilities/abilityManager.ts';
-
 import { Explosion } from './abilities/wizards/explosion.ts';
 import { WallBall } from './balls/wizards/earth.ts';
 import { Ability } from './abilities/ability.ts';
+
+import { ABILITY_SLOT } from './abilities/abilityManager.ts';
+import { armageddon, firestorm, supernova } from './abilities/wizards/fire.ts';
+import { earthWall, earthquake, colossus } from './abilities/wizards/earth.ts';
+import { blink, blitz, thunderbolt } from './abilities/wizards/lightning.ts';
 import { galeForce, recall, windburst } from './abilities/wizards/wind.ts';
 import { bloodlust, bloodTransfusion, vitalityDrain } from './abilities/wizards/blood.ts';
 import { celestialRing, holyJudgment, reflection } from './abilities/wizards/light.ts';
 import { flowState, permafrost, waterOrb } from './abilities/wizards/water.ts';
+import { shadowCast, shadowStep, vanish } from './abilities/wizards/shadow.ts';
 
 
 export interface GameStatePacket {
@@ -72,6 +72,9 @@ export class Game {
     inputMouse: InputMouse;
   }>();
 
+
+  private hostSide: TEAM_SIDE = TEAM_SIDE.Left;
+  private clientSide: TEAM_SIDE = TEAM_SIDE.Right;
   private network!: Network;
 
   private UI!: UI;
@@ -264,15 +267,15 @@ export class Game {
 
     const p1AbilityCon: PlayerAbilityConstruct = {
       slots: new Map([
-        [ABILITY_SLOT.Ability1, new Ability(waterOrb)],
-        [ABILITY_SLOT.Ability2, new Ability(flowState)],
+        [ABILITY_SLOT.Ability1, new Ability(shadowCast)],
+        [ABILITY_SLOT.Ability2, new Ability(vanish)],
       ]),
     };
 
     const p2AbilityCon: PlayerAbilityConstruct = {
       slots: new Map([
-        [ABILITY_SLOT.Ability1, new Ability(earthWall)],
-        [ABILITY_SLOT.Ability2, new Ability(celestialRing)],
+        [ABILITY_SLOT.Ability1, new Ability(shadowCast)],
+        [ABILITY_SLOT.Ability2, new Ability(vanish)],
       ]),
     };
   
@@ -374,7 +377,7 @@ export class Game {
 
       if (!player) continue;
 
-      player.setPlayerState(playerState);
+      player.setPlayerState(playerState, this.balls);
     }
 
     const hostBallIds = new Set(state.balls.map(b => b.id));
@@ -400,7 +403,7 @@ export class Game {
         this.balls.push(ball)
       };
 
-      ball.setBallState(ballState);
+      ball.setBallState(ballState, this.players);
     }
 
     this.UI.setUIState(state.ui);
@@ -499,6 +502,7 @@ export class Game {
   private updateHost(dt: number){
     for (const ball of this.balls){
       ball.update(dt);
+      ball.updateInvis(this.hostSide);
     }
 
     for (const player of this.players){
@@ -511,6 +515,7 @@ export class Game {
     
       if (!input) continue;
       player.update(input.inputKeys, input.inputMouse, this, dt)
+      player.updateInvis(this.hostSide);
       if (input.inputKeys.reset) this.resetGame();
     }
 
@@ -530,6 +535,14 @@ export class Game {
       inputKeys: this.input.getLocalInput(),
       inputMouse: this.input.getMouseInput(),
     })
+
+    for (const ball of this.balls){
+      ball.updateInvis(this.clientSide);
+    }
+
+    for (const player of this.players){
+      player.updateInvis(this.clientSide);
+    }
 
     this.updateDeadBalls();
   }

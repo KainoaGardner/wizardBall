@@ -17,6 +17,7 @@ import { ABILITY_SLOT } from '../abilities/abilityManager';
 
 import type { Ability, AbilityDefinition, AbilityState } from "../abilities/ability";
 import { BallFactory } from '../balls/ballFactory.ts';
+import type { ShadowThrow } from '../abilities/wizards/shadow.ts';
 
 
 export const DEFAULT_HEALTH = 100;
@@ -33,6 +34,8 @@ export interface PlayerState {
   vy: number;
   mosX: number;
   mosY: number;
+  invis: boolean;
+  holdingId: number | null;
 }
 
 export enum PLAYER_ID {
@@ -73,6 +76,8 @@ export class Player {
   private airResist: number;
   private holding: Ball | null = null;
 
+  private invisible: boolean = false;
+
   private side: TEAM_SIDE;
 
   private knockbackSpeedX: number = 0;
@@ -89,6 +94,8 @@ export class Player {
   private alive: boolean = true;
 
   private catchCooldown: number = CATCH_COOLDOWN;
+
+  private shadowThrow: ShadowThrow | null = null;
 
   constructor(
     p: PlayerConstruct,
@@ -141,6 +148,10 @@ export class Player {
     return this.id;
   }
 
+  public getShadowThrow(){
+    return this.shadowThrow;
+  } 
+
   public getSize(){
     return this.size;
   }
@@ -169,9 +180,18 @@ export class Player {
     return this.color; 
   }
 
+  public getInvis(){
+    return this.invisible;
+  }
+
+  public setInvis(invis: boolean){
+    this.invisible = invis; 
+  }
+
   public getPlayerState(): PlayerState {
     const pos = this.body.getPosition();
     const vel = this.body.getLinearVelocity();
+    const holdingId = this.holding ? this.holding.getId() : null;
 
     return {
       id: this.id,
@@ -182,6 +202,8 @@ export class Player {
       vy: vel.y,
       mosX: this.mosX,
       mosY: this.mosY,
+      invis: this.invisible,
+      holdingId: holdingId,
     };
   }
 
@@ -189,11 +211,16 @@ export class Player {
     return this.health / this.resetHealth;
   }
 
-  public setPlayerState(playerState: PlayerState){
+  public setPlayerState(playerState: PlayerState, balls: Ball[]){
     this.setPosition(playerState.x, playerState.y);
     this.setAngle(playerState.angle);
     this.setVelocity(playerState.vx, playerState.vy);
     this.setMosPos(playerState.mosX, playerState.mosY)
+    this.invisible = playerState.invis;
+
+    const held = balls.find(ball => ball.getId() === playerState.holdingId)
+    if (!held) this.holding = null;
+    else this.holding = held;
   }
 
   public setMosPos(mosX: number, mosY: number){
@@ -327,6 +354,18 @@ export class Player {
 
     ball.pickup(this, this.side, this.color);
     this.holding = ball;
+
+    if (this.invisible){
+      this.holding.setInvis(true);
+    }
+  }
+
+  private setShadowThrow(ball: Ball){
+    this.shadowThrow = ball.getShadowData();
+    const vel = this.body.getLinearVelocity();
+    this.shadowThrow.angle = this.body.getAngle();
+    this.shadowThrow.vx = vel.x;
+    this.shadowThrow.vy = vel.y;
   }
 
   private throwBall(inputKeys: InputKeys){
@@ -335,6 +374,8 @@ export class Player {
     const ball = this.holding;
     this.holding = null;
     ball.throw(this.body.getAngle(), this.color);
+
+    this.setShadowThrow(ball);
   }
 
   private dropBall(inputKeys: InputKeys){
@@ -401,6 +442,15 @@ export class Player {
     }
 
     this.abilityManager.update(state);
+  }
+
+  public updateInvis(side: TEAM_SIDE){
+    if (side === this.side) return;
+    if (this.invisible){
+      this.sprite.visible = false;
+    } else {
+      this.sprite.visible = true;
+    }
   }
 
   public update(keyInput: InputKeys, mouseInput: InputMouse, game: Game, dt: number){

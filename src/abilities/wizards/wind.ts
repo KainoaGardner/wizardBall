@@ -12,11 +12,6 @@
 
 import type { AbilityDefinition, AbilityState } from "../ability";
 
-import type { BallConstruct } from '../../balls/types.ts';
-import { BALL_TYPE, NORMAL_BALL_TYPE_CONST, BALL_STATE } from '../../balls/types.ts';
-
-import { PLAY_WIDTH, PLAY_HEIGHT, PIXELS_PER_UNIT, TEAM_SIDE, MID_WALL_THICKNESS } from '../../utils/global.ts';
-
 export const WIND_GALE_DURATION = 60 * 10;
 export const WIND_RECALL_DURATION = 60 * 1;
 export const WIND_GALE_FORCE = 0.3;
@@ -48,13 +43,19 @@ export const galeForce: AbilityDefinition = {
     const player = state.game.getPlayers().find(p => p.getId() === state.playerId);
     if (!player) return;
 
-    const playerBody = player.getBody();
-    const angle = playerBody.getAngle();
-    const dirX = Math.cos(angle);
-    const dirY = Math.sin(angle);
 
     for (const ball of state.game.getBalls()){
       const force = WIND_GALE_FORCE;
+
+      const ballPos = ball.getPosition();
+      const mosPos = player.getMosPos();
+      const dx = mosPos.x - ballPos.x;
+      const dy = mosPos.y - ballPos.y;
+      
+      const length = Math.sqrt(dx * dx + dy * dy);
+      const dirX = dx / length;
+      const dirY = dy / length;
+
       ball.setKnockbackSpeed(dirX * force, dirY * force);
     }
   }

@@ -80,7 +80,6 @@ export const blink: AbilityDefinition = {
     blinkPos.y = Math.min(Math.max(blinkPos.y, -scaledHeight / 2), scaledHeight / 2);
 
     if (side === TEAM_SIDE.Left){
-      // blinkPos.x = Math.min(Math.max(blinkPos.x, -scaledWidth / 2), 0 - MID_WALL_THICKNESS);
       blinkPos.x = Math.min(Math.max(blinkPos.x, - scaledWidth / 2), 0 - MID_WALL_THICKNESS);
     } else {
       blinkPos.x = Math.min(Math.max(blinkPos.x, 0 + MID_WALL_THICKNESS), scaledWidth / 2);

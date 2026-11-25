@@ -12,6 +12,7 @@ import type { BallConstruct, BallState, BallTypeConstruct } from './types.ts';
 
 import { Explosion } from '../abilities/wizards/explosion.ts';
 import { Player } from '../player/player.ts';
+import type { ShadowThrow } from '../abilities/wizards/shadow.ts';
 
 const BALL_RESET_SPEED = 5; 
 const BALL_THROW_SPEED = 100.0;
@@ -42,6 +43,8 @@ export class Ball {
   private frozen: boolean = false;
   private frozenVX: number = 0;
   private frozenVY: number = 0;
+
+  private invisible: boolean = false;
 
   private airResist: number;
   private knockbackSpeedX: number = 0;
@@ -108,6 +111,22 @@ export class Ball {
     return this.id;
   }
 
+  public getShadowData(): ShadowThrow {
+    const pos = this.getPosition();
+    return {
+      x: pos.x,
+      y: pos.y,
+      angle: 0,
+      vx: 0,
+      vy: 0,
+      type: this.type,
+      size: this.size,
+      damage: this.damage,
+      extraDamage: this.extraDamage,
+      speed: this.speed,
+    }
+  }
+
   public isAlive(){
     return this.alive;
   }
@@ -146,6 +165,14 @@ export class Ball {
 
   public getType(){
     return this.type;
+  }
+
+  public getInvis(){
+    return this.invisible;
+  }
+
+  public setInvis(invis: boolean){
+    this.invisible = invis; 
   }
 
   public setSize(size: number){
@@ -252,6 +279,7 @@ export class Ball {
   public getBallState(): BallState {
     const pos = this.body.getPosition();
     const vel = this.body.getLinearVelocity();
+    const heldById = this.heldBy ? this.heldBy.getId() : null;
 
     return {
       id: this.id,
@@ -265,6 +293,11 @@ export class Ball {
       state: this.state,
       side: this.side,
       speed: this.speed,
+      size: this.size,
+      invis: this.invisible,
+      heldById: heldById,
+      damage: this.damage,
+      extraDamage: this.extraDamage,
     };
   }
 
@@ -273,7 +306,7 @@ export class Ball {
     this.knockbackSpeedY = vy;
   }
 
-  public setBallState(ballState: BallState){
+  public setBallState(ballState: BallState, players: Player[]){
     this.setPosition(ballState.x, ballState.y);
     this.setVelocity(ballState.vx, ballState.vy);
     this.setColor(ballState.color);
@@ -281,6 +314,16 @@ export class Ball {
     this.state = ballState.state;
     this.side = ballState.side;
     this.speed = ballState.speed;
+    this.setSize(ballState.size);
+    this.invisible = ballState.invis;
+
+    this.damage = ballState.damage;
+    this.extraDamage = ballState.extraDamage;
+  
+    const heldBy = players.find(player => player.getId() === ballState.heldById);
+    if (!heldBy) this.heldBy = null;
+    else this.heldBy = heldBy;
+
   }
 
   public setPosition(x: number, y: number){
@@ -342,6 +385,21 @@ export class Ball {
     if (this.freezeDuration <= 0) return;
     this.freezeDuration = Math.max(this.freezeDuration - 1, 0);
     if (this.freezeDuration <= 0) this.unfreeze();
+  }
+
+  public updateInvis(side: TEAM_SIDE){
+    if (this.state !== BALL_STATE.Held || !this.heldBy) {
+      this.sprite.visible = true;
+      this.invisible = false;
+      return; 
+    }
+
+    if (side === this.side) return;
+    if (this.invisible){
+      this.sprite.visible = false;
+    } else {
+      this.sprite.visible = true;
+    }
   }
 
   public update(dt: number){

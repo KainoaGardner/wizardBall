@@ -22,7 +22,12 @@ export interface BallState {
   type: BALL_TYPE;
   state: BALL_STATE;
   side: TEAM_SIDE;
+  size: number;
   speed: number,
+  damage: number,
+  extraDamage: number,
+  invis: boolean,
+  heldById: number | null;
 }
 
 export interface BallConstruct {

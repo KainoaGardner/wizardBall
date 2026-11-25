@@ -15,7 +15,7 @@ import type { AbilityDefinition, AbilityState } from "../ability";
 import type { BallConstruct } from '../../balls/types.ts';
 import { BALL_TYPE, NORMAL_BALL_TYPE_CONST, BALL_STATE } from '../../balls/types.ts';
 
-import { PLAY_WIDTH, PLAY_HEIGHT, PIXELS_PER_UNIT, TEAM_SIDE, MID_WALL_THICKNESS } from '../../utils/global.ts';
+import { PIXELS_PER_UNIT, TEAM_SIDE } from '../../utils/global.ts';
 
 export const CELESTIAL_RING_COUNT = 8;
 export const CELESTIAL_RING_RADIUS = 75;

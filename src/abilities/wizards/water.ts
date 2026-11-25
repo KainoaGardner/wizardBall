@@ -67,7 +67,7 @@ export const flowState: AbilityDefinition = {
     for (let fixture = body.getFixtureList(); fixture; fixture = fixture.getNext()) {
       fixture.setFilterData({
         categoryBits: COLLISION_GROUPS.Player,
-        maskBits: COLLISION_GROUPS.Wall ,
+        maskBits: COLLISION_GROUPS.Wall | COLLISION_GROUPS.MidWall,
         groupIndex: 0,
       });
     }
@@ -87,7 +87,7 @@ export const flowState: AbilityDefinition = {
       for (let fixture = body.getFixtureList(); fixture; fixture = fixture.getNext()) {
         fixture.setFilterData({
           categoryBits: COLLISION_GROUPS.Player,
-          maskBits: COLLISION_GROUPS.Ball | COLLISION_GROUPS.Wall | COLLISION_GROUPS.Player,
+          maskBits: COLLISION_GROUPS.Ball | COLLISION_GROUPS.Wall | COLLISION_GROUPS.MidWall | COLLISION_GROUPS.Player,
           groupIndex: 0,
         });
       }
