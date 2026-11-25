@@ -2,11 +2,11 @@ import planck from 'planck';
 import type { Application } from 'pixi.js';
 import type { Physics } from '../../utils/physics.ts';
 
-import { PIXELS_PER_UNIT, TEAM_SIDE } from '../../utils/global.ts';
+import { TEAM_SIDE } from '../../utils/global.ts';
 
 import { Ball } from '../../balls/ball.ts';
 
-import { BALL_STATE, BALL_TYPE } from '../../balls/types.ts';
+import { BALL_TYPE } from '../../balls/types.ts';
 import type { BallConstruct, BallTypeConstruct } from '../../balls/types.ts';
 
 export const WALL_LIFE_TIME = 10 * 60;

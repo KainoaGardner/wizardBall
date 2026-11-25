@@ -11,14 +11,9 @@
 
 
 import type { AbilityDefinition, AbilityState } from "../ability";
-import { Player } from '../../player/player.ts';
-import { Ball } from '../../balls/ball.ts';
-import { Game } from '../../game.ts';
 import type { BallConstruct } from '../../balls/types.ts';
 import { BALL_TYPE, NORMAL_BALL_TYPE_CONST, BALL_STATE } from '../../balls/types.ts';
 
-import { BallFactory } from '../../balls/ballFactory.ts';
-import { Container } from 'pixi.js';
 import { PIXELS_PER_UNIT } from "../../utils/global.ts";
 
 

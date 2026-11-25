@@ -35,6 +35,7 @@ import { ABILITY_SLOT } from './abilities/abilityManager.ts';
 import { Explosion } from './abilities/wizards/explosion.ts';
 import { WallBall } from './balls/wizards/earth.ts';
 import { Ability } from './abilities/ability.ts';
+import { galeForce, recall, windburst } from './abilities/wizards/wind.ts';
 
 
 export interface GameStatePacket {
@@ -266,8 +267,8 @@ export class Game {
 
     const p2AbilityCon: PlayerAbilityConstruct = {
       slots: new Map([
-        [ABILITY_SLOT.Ability1, new Ability(blink)],
-        [ABILITY_SLOT.Ability2, new Ability(blitz)],
+        [ABILITY_SLOT.Ability1, new Ability(recall)],
+        [ABILITY_SLOT.Ability2, new Ability(galeForce)],
       ]),
     };
   

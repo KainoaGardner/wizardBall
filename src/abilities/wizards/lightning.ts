@@ -12,15 +12,11 @@
 
 
 import type { AbilityDefinition, AbilityState } from "../ability";
-import { Player } from '../../player/player.ts';
-import { Ball } from '../../balls/ball.ts';
-import { Game } from '../../game.ts';
+
 import type { BallConstruct } from '../../balls/types.ts';
 import { BALL_TYPE, NORMAL_BALL_TYPE_CONST, BALL_STATE } from '../../balls/types.ts';
 
-import { BallFactory } from '../../balls/ballFactory.ts';
-import { Container } from 'pixi.js';
-import { PIXELS_PER_UNIT } from "../../utils/global.ts";
+import { PLAY_WIDTH, PLAY_HEIGHT, PIXELS_PER_UNIT, TEAM_SIDE, MID_WALL_THICKNESS } from '../../utils/global.ts';
 
 export const BLITZ_MAX_SPEED = 10000;
 export const BLITZ_DURATION = 60 * 10;
@@ -74,8 +70,23 @@ export const blink: AbilityDefinition = {
 
     
     const mos = player.getMosPos();
+    
+    const blinkPos = mos;
+    const side = player.getSide();
 
-    player.setPosition(mos.x, mos.y);
+    const scaledHeight = PLAY_HEIGHT / PIXELS_PER_UNIT;
+    const scaledWidth = PLAY_WIDTH / PIXELS_PER_UNIT;
+    
+    blinkPos.y = Math.min(Math.max(blinkPos.y, -scaledHeight / 2), scaledHeight / 2);
+
+    if (side === TEAM_SIDE.Left){
+      // blinkPos.x = Math.min(Math.max(blinkPos.x, -scaledWidth / 2), 0 - MID_WALL_THICKNESS);
+      blinkPos.x = Math.min(Math.max(blinkPos.x, - scaledWidth / 2), 0 - MID_WALL_THICKNESS);
+    } else {
+      blinkPos.x = Math.min(Math.max(blinkPos.x, 0 + MID_WALL_THICKNESS), scaledWidth / 2);
+    }
+
+    player.setPosition(blinkPos.x, blinkPos.y);
     return true;
   },
 

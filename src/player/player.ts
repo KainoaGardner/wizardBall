@@ -141,6 +141,10 @@ export class Player {
     return this.id;
   }
 
+  public getSize(){
+    return this.size;
+  }
+
   public getSide(){
     return this.side;
   }
