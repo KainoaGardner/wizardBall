@@ -22,35 +22,18 @@ import { BALL_TYPE, NORMAL_BALL_TYPE_CONST, BALL_STATE } from '../../balls/types
 
 export const INVIS_DURATION = 60 * 3;
 
-export interface ShadowThrow {
-  x: number;
-  y: number;
-  angle: number;
-  vx: number;
-  vy: number;
-  type: BALL_TYPE;
-
-  size: number;
-  damage: number;
-  extraDamage: number;
-  speed: number;
-}
 
 export const shadowCast: AbilityDefinition = {
   id: "shadowcast",
   name: "Shadow Cast",
   description: "",
-  cooldown: 20,
-
-  variables: {
-    timeCounter: 0,
-  },
+  cooldown: 15,
 
   activate(state: AbilityState, variables: Record<string, number>): boolean {
     const player = state.game.getPlayers().find(p => p.getId() === state.playerId);
     if (!player) return false;
 
-    const shadowThrow = player.getShadowThrow();
+    const shadowThrow = player.getLastThrow();
     if (!shadowThrow) return false;
 
     let shadowBallCon: BallConstruct = {

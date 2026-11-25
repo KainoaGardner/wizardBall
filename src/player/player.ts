@@ -6,6 +6,7 @@ import { Physics } from '../utils/physics.ts';
 
 import { Ball } from '../balls/ball.ts';
 import { BALL_STATE } from '../balls/types.ts';
+import type { BasicBallState } from '../balls/types.ts';
 
 import type { InputKeys, InputMouse } from '../input/input.ts';
 
@@ -17,7 +18,8 @@ import { ABILITY_SLOT } from '../abilities/abilityManager';
 
 import type { Ability, AbilityDefinition, AbilityState } from "../abilities/ability";
 import { BallFactory } from '../balls/ballFactory.ts';
-import type { ShadowThrow } from '../abilities/wizards/shadow.ts';
+import { shadowCast } from '../abilities/wizards/shadow.ts';
+import { REWIND_FRAME_SIZE } from '../abilities/wizards/time.ts';
 
 
 export const DEFAULT_HEALTH = 100;
@@ -95,7 +97,9 @@ export class Player {
 
   private catchCooldown: number = CATCH_COOLDOWN;
 
-  private shadowThrow: ShadowThrow | null = null;
+  private lastThrow: BasicBallState | null = null;
+
+  private posHistory: {x: number, y: number}[] = [];
 
   constructor(
     p: PlayerConstruct,
@@ -148,9 +152,13 @@ export class Player {
     return this.id;
   }
 
-  public getShadowThrow(){
-    return this.shadowThrow;
+  public getLastThrow(){
+    return this.lastThrow;
   } 
+
+  public getPosHistory(){
+    return this.posHistory;
+  }
 
   public getSize(){
     return this.size;
@@ -360,12 +368,14 @@ export class Player {
     }
   }
 
-  private setShadowThrow(ball: Ball){
-    this.shadowThrow = ball.getShadowData();
+  private setLastThrow(ball: Ball){
+    if (!this.abilityManager.hasAbility("shadowcast") && !this.abilityManager.hasAbility("revert")) return;
+
+    this.lastThrow = ball.getBasicBallState();
     const vel = this.body.getLinearVelocity();
-    this.shadowThrow.angle = this.body.getAngle();
-    this.shadowThrow.vx = vel.x;
-    this.shadowThrow.vy = vel.y;
+    this.lastThrow.angle = this.body.getAngle();
+    this.lastThrow.vx = vel.x;
+    this.lastThrow.vy = vel.y;
   }
 
   private throwBall(inputKeys: InputKeys){
@@ -375,7 +385,7 @@ export class Player {
     this.holding = null;
     ball.throw(this.body.getAngle(), this.color);
 
-    this.setShadowThrow(ball);
+    this.setLastThrow(ball);
   }
 
   private dropBall(inputKeys: InputKeys){
@@ -453,6 +463,17 @@ export class Player {
     }
   }
 
+  public updatePosHistory(){
+    if (!this.abilityManager.hasAbility("revert")) return;
+
+    const pos = this.getPosition();
+    this.posHistory.push({x: pos.x, y: pos.y});
+    if (this.posHistory.length > REWIND_FRAME_SIZE){
+      this.posHistory.shift();
+    }
+
+  }
+
   public update(keyInput: InputKeys, mouseInput: InputMouse, game: Game, dt: number){
     const state: AbilityState = {
       game: game,
@@ -460,6 +481,7 @@ export class Player {
     };
 
     this.updateMove(dt, keyInput);
+    this.updatePosHistory();
     this.updateAbility(keyInput, state);
     this.updateAngle(mouseInput);
     this.updateHeld();

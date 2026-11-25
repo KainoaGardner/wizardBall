@@ -48,6 +48,13 @@ export class AbilityManager {
   public getCooldowns(){
     return this.cooldowns;
   }
+
+  public hasAbility(id: string){
+    for (const ability of this.slots.values()){
+      if (ability.getDefinition().id === id) return true;
+    }
+    return false;
+  }
   
   public setSlot(slot: ABILITY_SLOT, ability: Ability){
     this.slots.set(slot, ability);

@@ -30,6 +30,21 @@ export interface BallState {
   heldById: number | null;
 }
 
+export interface BasicBallState {
+  id: number,
+  x: number;
+  y: number;
+  angle: number;
+  vx: number;
+  vy: number;
+  type: BALL_TYPE;
+
+  size: number;
+  damage: number;
+  extraDamage: number;
+  speed: number;
+}
+
 export interface BallConstruct {
   x: number,
   y: number,

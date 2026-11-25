@@ -8,11 +8,10 @@ import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
 import { COLLISION_GROUPS } from '../utils/physics.ts';
 
 import { BALL_TYPE, BALL_STATE } from './types.ts';
-import type { BallConstruct, BallState, BallTypeConstruct } from './types.ts';
+import type { BallConstruct, BallState, BallTypeConstruct, BasicBallState } from './types.ts';
 
 import { Explosion } from '../abilities/wizards/explosion.ts';
 import { Player } from '../player/player.ts';
-import type { ShadowThrow } from '../abilities/wizards/shadow.ts';
 
 const BALL_RESET_SPEED = 5; 
 const BALL_THROW_SPEED = 100.0;
@@ -111,9 +110,10 @@ export class Ball {
     return this.id;
   }
 
-  public getShadowData(): ShadowThrow {
+  public getBasicBallState(): BasicBallState {
     const pos = this.getPosition();
     return {
+      id: this.id,
       x: pos.x,
       y: pos.y,
       angle: 0,

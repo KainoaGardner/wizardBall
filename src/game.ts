@@ -39,6 +39,7 @@ import { bloodlust, bloodTransfusion, vitalityDrain } from './abilities/wizards/
 import { celestialRing, holyJudgment, reflection } from './abilities/wizards/light.ts';
 import { flowState, permafrost, waterOrb } from './abilities/wizards/water.ts';
 import { shadowCast, shadowStep, vanish } from './abilities/wizards/shadow.ts';
+import { revert, rewind } from './abilities/wizards/time.ts';
 
 
 export interface GameStatePacket {
@@ -267,8 +268,8 @@ export class Game {
 
     const p1AbilityCon: PlayerAbilityConstruct = {
       slots: new Map([
-        [ABILITY_SLOT.Ability1, new Ability(shadowCast)],
-        [ABILITY_SLOT.Ability2, new Ability(vanish)],
+        [ABILITY_SLOT.Ability1, new Ability(revert)],
+        [ABILITY_SLOT.Ability2, new Ability(rewind)],
       ]),
     };
 
