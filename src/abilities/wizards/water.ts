@@ -14,7 +14,7 @@ import type { AbilityDefinition, AbilityState } from "../ability";
 import type { BallConstruct } from '../../balls/types.ts';
 import { BALL_TYPE, NORMAL_BALL_TYPE_CONST, BALL_STATE } from '../../balls/types.ts';
 
-import { PLAY_WIDTH, PLAY_HEIGHT, PIXELS_PER_UNIT, TEAM_SIDE, MID_WALL_THICKNESS } from '../../utils/global.ts';
+import { PLAY_WIDTH, PLAY_HEIGHT, PIXELS_PER_UNIT, TEAM_SIDE, MID_WALL_THICKNESS, FREEZE_TYPE } from '../../utils/global.ts';
 import { COLLISION_GROUPS } from '../../utils/physics.ts';
 import { WaterBall } from "../../balls/wizards/water.ts";
 
@@ -35,7 +35,7 @@ export const permafrost: AbilityDefinition = {
     let count = 0;
     for (const ball of state.game.getBalls()){
       if (ball.getSide() === TEAM_SIDE.Neither || ball.getSide() === player.getSide()) continue;
-      ball.freeze(FREEZE_TIME);
+      ball.freeze(FREEZE_TIME, FREEZE_TYPE.Ice);
       count++;
     }
 

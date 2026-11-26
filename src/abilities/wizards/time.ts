@@ -14,14 +14,15 @@ import type { AbilityDefinition, AbilityState } from "../ability";
 import type { BallConstruct, BallTypeConstruct } from '../../balls/types.ts';
 import { BALL_TYPE, NORMAL_BALL_TYPE_CONST, BALL_STATE } from '../../balls/types.ts';
 
-import { PLAY_WIDTH, PLAY_HEIGHT, PIXELS_PER_UNIT, TEAM_SIDE, MID_WALL_THICKNESS } from '../../utils/global.ts';
+import { PLAY_WIDTH, PLAY_HEIGHT, PIXELS_PER_UNIT, TEAM_SIDE, MID_WALL_THICKNESS, FREEZE_TYPE, SLEEP_TYPE } from '../../utils/global.ts';
 
 export const REWIND_FRAME_SIZE = 60 * 1;
+export const TIME_STOP_DURATION = 60 * 5;
 
 export const timeStop: AbilityDefinition = {
   id: "timestop",
   name: "Time Stop",
-  description: "",
+  description: "Freeze time itself, stopping all players and balls in place while you remain free to move. Any balls thrown during the freeze will remain suspended until time resumes.",
   cooldown: 50,
 
   variables: {
@@ -32,32 +33,32 @@ export const timeStop: AbilityDefinition = {
     const player = state.game.getPlayers().find(p => p.getId() === state.playerId);
     if (!player) return false;
 
-    variables.timeCounter = WIND_GALE_DURATION;
+    variables.timeCounter = TIME_STOP_DURATION;
+
+    for (const ball of state.game.getBalls()){
+      ball.freeze(TIME_STOP_DURATION, FREEZE_TYPE.Time);
+    }
+
+    for (const p of state.game.getPlayers()){
+      if (p.getSide() === player.getSide()) continue;
+      p.freeze(TIME_STOP_DURATION, FREEZE_TYPE.Time);
+    }
+
     return true;  
   },
 
   update(state: AbilityState, variables: Record<string, number>){
     if (variables.timeCounter <= 0) return; 
-    variables.timeCounter--;
 
     const player = state.game.getPlayers().find(p => p.getId() === state.playerId);
     if (!player) return;
 
-
     for (const ball of state.game.getBalls()){
-      const force = WIND_GALE_FORCE;
-
-      const ballPos = ball.getPosition();
-      const mosPos = player.getMosPos();
-      const dx = mosPos.x - ballPos.x;
-      const dy = mosPos.y - ballPos.y;
-      
-      const length = Math.sqrt(dx * dx + dy * dy);
-      const dirX = dx / length;
-      const dirY = dy / length;
-
-      ball.setKnockbackSpeed(dirX * force, dirY * force);
+      if (ball.getSleep() !== SLEEP_TYPE.Time){
+        ball.freeze(variables.timeCounter, FREEZE_TYPE.Time);
+      }
     }
+    variables.timeCounter--;
   }
 }
 

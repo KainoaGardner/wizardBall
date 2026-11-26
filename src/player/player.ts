@@ -11,7 +11,7 @@ import type { BasicBallState } from '../balls/types.ts';
 import type { InputKeys, InputMouse } from '../input/input.ts';
 
 import { createCircleTexture } from '../utils/texture.ts';
-import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
+import { FREEZE_TYPE, PIXELS_PER_UNIT, SLEEP_TYPE, TEAM_SIDE } from '../utils/global.ts';
 
 import { AbilityManager } from '../abilities/abilityManager';
 import { ABILITY_SLOT } from '../abilities/abilityManager';
@@ -90,10 +90,19 @@ export class Player {
   private resetY: number;
   private resetHealth: number;
 
+  private freezeDuration: number = 0;
+  private frozen: FREEZE_TYPE = FREEZE_TYPE.Unfrozen;
+  private frozenVX: number = 0;
+  private frozenVY: number = 0;
+
+  private invincibleDuration: number = 0;
+
   private mosX: number = 0;
   private mosY: number = 0;
 
   private alive: boolean = true;
+
+  private sleep: SLEEP_TYPE = SLEEP_TYPE.Awake;
 
   private catchCooldown: number = CATCH_COOLDOWN;
 
@@ -170,6 +179,14 @@ export class Player {
 
   public getHolding(){
     return this.holding;
+  }
+
+  public getSleep(){
+    return this.sleep;
+  }
+
+  public setSleep(sleep: SLEEP_TYPE){
+    this.sleep = sleep;
   }
 
   public setHolding(ball: Ball | null){
@@ -279,6 +296,7 @@ export class Player {
   }
 
   public takeDamage(damage: number){
+    if (this.invincibleDuration) return;
     this.health = Math.min(Math.max(this.health - damage, 0), this.resetHealth); 
   }
 
@@ -355,7 +373,7 @@ export class Player {
 
   private pickupBall(ball: Ball){
     if (this.holding !== null) return;
-    if (ball.getSleep()) return;
+    if (ball.getSleep() === SLEEP_TYPE.Ice) return;
     if (ball.getState() === BALL_STATE.Held) return;
     if (ball.getState() === BALL_STATE.Thrown && ball.getSide() !== this.side) return;
     if (!ball.canPickup()) return;
@@ -407,6 +425,47 @@ export class Player {
     this.pickupBall(ball);
     this.hit(ball);
   }
+
+  private setFrozenVelocity(x: number, y: number){
+    this.frozenVX = x;
+    this.frozenVY = y;
+  }
+
+  private getFrozenVelocity(){
+    return {vx: this.frozenVX, vy: this.frozenVY};
+  }
+
+  public freeze(duration: number, type: FREEZE_TYPE){
+    this.freezeDuration = duration;
+    this.frozen = type;
+    const velocity = this.body.getLinearVelocity();
+    this.setFrozenVelocity(velocity.x, velocity.y);
+    if (type === FREEZE_TYPE.Ice) this.setSleep(SLEEP_TYPE.Ice);
+    else if (type === FREEZE_TYPE.Time) this.setSleep(SLEEP_TYPE.Time);
+
+    this.body.setType("static");
+  }
+
+  public unfreeze(){
+    if (!this.frozen) return;
+    this.frozen = FREEZE_TYPE.Unfrozen;
+
+    this.body.setType("dynamic");
+    this.setSleep(SLEEP_TYPE.Awake);
+    const velocity = this.getFrozenVelocity();
+    this.setVelocity(velocity.vx, velocity.vy);
+    this.setFrozenVelocity(0, 0);
+  }
+
+  public setInvincible(duration: number){
+    this.invincibleDuration = duration;
+  }
+
+  private updateIncvincible(){
+    if (this.invincibleDuration <= 0) return;
+    this.invincibleDuration = Math.max(this.invincibleDuration - 1, 0);
+  }
+
   
   private updateHeld(){
     if (!this.holding) return;
@@ -441,6 +500,12 @@ export class Player {
     this.body.applyLinearImpulse(knockbackImpulse, this.body.getWorldCenter(), true);
     this.knockbackSpeedX = 0;
     this.knockbackSpeedY = 0;
+  }
+
+  private updateFreeze(){
+    if (this.freezeDuration <= 0) return;
+    this.freezeDuration = Math.max(this.freezeDuration - 1, 0);
+    if (this.freezeDuration <= 0) this.unfreeze();
   }
 
   private updateAbility(keyInput: InputKeys, state: AbilityState){
@@ -480,9 +545,12 @@ export class Player {
       playerId: this.id,
     };
 
+    this.updateFreeze();
+    if (this.sleep === SLEEP_TYPE.Time) return;
     this.updateMove(dt, keyInput);
     this.updatePosHistory();
     this.updateAbility(keyInput, state);
+    this.updateIncvincible();
     this.updateAngle(mouseInput);
     this.updateHeld();
     this.throwBall(keyInput);

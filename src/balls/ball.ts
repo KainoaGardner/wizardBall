@@ -4,7 +4,7 @@ import { Application, Container, Sprite, Texture } from 'pixi.js';
 import { Physics } from '../utils/physics.ts';
 
 import { createCircleTexture } from '../utils/texture.ts';
-import { PIXELS_PER_UNIT, TEAM_SIDE } from '../utils/global.ts';
+import { FREEZE_TYPE, PIXELS_PER_UNIT, SLEEP_TYPE, TEAM_SIDE } from '../utils/global.ts';
 import { COLLISION_GROUPS } from '../utils/physics.ts';
 
 import { BALL_TYPE, BALL_STATE } from './types.ts';
@@ -39,7 +39,7 @@ export class Ball {
   private speed: number;
 
   private freezeDuration: number = 0;
-  private frozen: boolean = false;
+  private frozen: FREEZE_TYPE = FREEZE_TYPE.Unfrozen;
   private frozenVX: number = 0;
   private frozenVY: number = 0;
 
@@ -55,8 +55,11 @@ export class Ball {
 
   private pickupCooldown: number = 0;
 
-  private sleep: boolean = false;
+  private sleep: SLEEP_TYPE = SLEEP_TYPE.Awake;
   private alive: boolean = true;
+
+  private parried: boolean = false;
+  private parryDamage: number = 0;
 
   protected justGrabbed: boolean = false;
   protected justHit: boolean = false;
@@ -151,9 +154,19 @@ export class Ball {
     return this.side;
   }
 
+  public setSide(side: TEAM_SIDE){
+    this.side = side;
+  }
+
+
   public getSpeed(){
     return this.speed;
   }
+
+  public setSpeed(speed: number){
+    this.speed = speed;
+  }
+
 
   public getBody(){
     return this.body; 
@@ -234,21 +247,23 @@ export class Ball {
     this.state = state;
   }
 
-  public freeze(duration: number){
+  public freeze(duration: number, type: FREEZE_TYPE){
     this.freezeDuration = duration;
-    this.frozen = true;
+    this.frozen = type;
     const velocity = this.body.getLinearVelocity();
     this.setFrozenVelocity(velocity.x, velocity.y);
-    this.setSleep(true);
+    if (type === FREEZE_TYPE.Ice) this.setSleep(SLEEP_TYPE.Ice);
+    else if (type === FREEZE_TYPE.Time) this.setSleep(SLEEP_TYPE.Time);
+
     this.body.setType("static");
   }
 
   public unfreeze(){
     if (!this.frozen) return;
-    this.frozen = false;
+    this.frozen = FREEZE_TYPE.Unfrozen;
 
     this.body.setType("dynamic");
-    this.setSleep(false);
+    this.setSleep(SLEEP_TYPE.Awake);
     const velocity = this.getFrozenVelocity();
     this.setVelocity(velocity.vx, velocity.vy);
     this.setFrozenVelocity(0, 0);
@@ -264,7 +279,7 @@ export class Ball {
     return {vx: this.frozenVX, vy: this.frozenVY};
   }
 
-  public setSleep(sleep: boolean){
+  public setSleep(sleep: SLEEP_TYPE){
     this.sleep = sleep;
   }
 
@@ -402,13 +417,27 @@ export class Ball {
     }
   }
 
+  public updateParry(){
+    if (!this.parried) return;
+
+    if (this.state !== BALL_STATE.Thrown){
+      this.parried = false;
+      this.extraDamage = Math.max(this.extraDamage - this.parryDamage, 0);
+      this.parryDamage = 0;
+    }
+  }
+
   public update(dt: number){
     this.updateFreeze();
-    if (this.sleep) return;
+
+    if (this.sleep === SLEEP_TYPE.Ice) return;
 
     this.updateJust();
-
     this.updatePickup();
+    this.updateParry();
+
+    if (this.sleep === SLEEP_TYPE.Time) return;
+
     const speed = this.body.getLinearVelocity().length();
 
     const knockbackImpulse = new planck.Vec2(this.knockbackSpeedX, this.knockbackSpeedY);
@@ -454,6 +483,22 @@ export class Ball {
     direction.normalize();
 
     this.body.setLinearVelocity(direction.mul(this.speed));
+
+    this.setFrozenVelocity(direction.x, direction.y);
+  }
+
+  public parry(speed: number, angle: number, color: number, extraDamage: number){
+    this.setState(BALL_STATE.Thrown);
+    this.setColor(color);
+    this.heldBy = null;
+    this.parried = true;
+    this.parryDamage = extraDamage;
+    this.extraDamage += extraDamage;
+
+    const direction = new planck.Vec2(Math.cos(angle), Math.sin(angle));
+    direction.normalize();
+
+    this.body.setLinearVelocity(direction.mul(speed));
   }
 
   public destory(physics: Physics): void {
